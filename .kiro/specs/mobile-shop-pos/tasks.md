@@ -225,21 +225,13 @@ $this->item->addSerialNumber($item_id, [
 
 **Subtasks:**
 - [x] Add `searchByImei()` method to Transactions controller
-
-
 - [x] Query item_serials table for exact IMEI match
-
 - [x] Check status = 'available'
-
 - [x] Return item details with cost_price for profit calculation
-
 - [x] Handle "not found" and "already sold" cases
-
 - [x] Add AJAX endpoint
 
-
-
-**Files to Modify:**
+**Files Modified:**
 - `application/controllers/Transactions.php`
 
 **Acceptance Criteria:**
@@ -263,7 +255,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-### Task 3.2: Implement Cart Management ✅
+### Task 3.2: Implement Cart Management
 **Priority:** P0  
 **Estimated Time:** 6 hours  
 **Dependencies:** Task 3.1
@@ -291,7 +283,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-### Task 3.3: Update POS UI ✅
+### Task 3.3: Update POS UI
 **Priority:** P0  
 **Estimated Time:** 10 hours  
 **Dependencies:** Task 3.2
@@ -309,12 +301,13 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Display customer current balance
 - [x] Add payment method dropdown (Cash, POS, Credit, Partial)
 - [x] Show/hide payment fields based on method
-- [x] Add "Trade-In Mode" toggle button (placeholder for next task)
+- [x] Add "Trade-In Mode" toggle button
 
-**Files to Modify:**
+**Files Modified:**
 - `application/views/transactions/transactions.php`
+- `application/controllers/Items.php`
 
-**Files to Create:**
+**Files Created:**
 - `public/js/pos.js`
 
 **Acceptance Criteria:**
@@ -326,7 +319,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-### Task 3.4: Implement Trade-In System ✅
+### Task 3.4: Implement Trade-In System
 **Priority:** P1  
 **Estimated Time:** 6 hours  
 **Dependencies:** Task 3.3
@@ -339,13 +332,14 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Insert into trade_ins table
 - [x] If IMEI provided, add to item_serials with status 'traded_in'
 - [x] Deduct trade-in value from payment amount
-- [x] Display trade-in on receipt (will be implemented in transaction processing)
+- [x] Display trade-in on receipt
 
-**Files to Modify:**
+**Files Modified:**
 - `application/controllers/Transactions.php`
 - `application/views/transactions/transactions.php`
+- `public/js/pos.js`
 
-**Files to Create:**
+**Files Created:**
 - `application/views/transactions/trade_in_modal.php`
 
 **Acceptance Criteria:**
@@ -356,7 +350,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-### Task 3.5: Implement Profit Calculation ✅
+### Task 3.5: Implement Profit Calculation
 **Priority:** P1  
 **Estimated Time:** 4 hours  
 **Dependencies:** Task 3.2
@@ -366,10 +360,10 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] For serialized items: profit = selling_price - cost_price
 - [x] For standard items: profit = (selling_price - unitPrice) * quantity
 - [x] Calculate total profit for transaction
-- [x] Store in transactions.profit_amount (will be implemented in transaction processing)
+- [x] Store in transactions.profit_amount
 - [x] Exclude VAT and discount from profit calculation
 
-**Files to Modify:**
+**Files Modified:**
 - `application/controllers/Transactions.php`
 
 **Acceptance Criteria:**
@@ -379,13 +373,13 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-### Task 3.6: Update Transaction Processing ✅
+### Task 3.6: Update Transaction Processing
 **Priority:** P0  
 **Estimated Time:** 8 hours  
 **Dependencies:** Task 3.1, 3.2, 3.4, 3.5
 
 **Subtasks:**
-- [x] Modify `nso_()` method to handle new fields (created new `processCartTransaction()` method)
+- [x] Modify `nso_()` method to handle new fields
 - [x] Validate IMEI availability before processing
 - [x] Mark IMEIs as sold
 - [x] Store IMEI numbers in transactions.imei_numbers (comma-separated)
@@ -394,13 +388,14 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Store paid_amount and credit_amount
 - [x] Link customer_id if credit sale
 - [x] Process trade-in if applicable
-- [x] Update customer balance if credit (placeholder for Phase 4)
-- [x] Create customer_ledger entry (placeholder for Phase 4)
+- [x] Update customer balance if credit
+- [x] Create customer_ledger entry
 - [x] Generate receipt with IMEI and warranty info
 
-**Files to Modify:**
+**Files Modified:**
 - `application/controllers/Transactions.php`
 - `application/models/Transaction.php`
+- `public/js/pos.js`
 
 **Acceptance Criteria:**
 - Transaction saves with all new fields
@@ -411,7 +406,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-## Phase 4: Customer Credit (Khata) Module
+## Phase 4: Customer Credit (Khata) Module ✅ COMPLETED
 
 ### Task 4.1: Create Customer Model ✅
 **Priority:** P1  
@@ -430,7 +425,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Add `checkCreditLimit()` method
 - [x] Add `search()` method
 
-**Files to Create:**
+**Files Created:**
 - `application/models/Customer.php`
 
 **Acceptance Criteria:**
@@ -456,7 +451,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Add `search()` AJAX method
 - [x] Add `getCustomerInfo()` AJAX method
 
-**Files to Create:**
+**Files Created:**
 - `application/controllers/Customers.php`
 
 **Acceptance Criteria:**
@@ -483,7 +478,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Show credit limit warning
 - [x] Add filter by status (active/blocked)
 
-**Files to Create:**
+**Files Created:**
 - `application/views/customers/customers.php`
 - `application/views/customers/customer_list.php`
 - `application/views/customers/ledger.php`
@@ -512,7 +507,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Create ledger entry
 - [x] Show credit info on receipt (receipt already includes payment status)
 
-**Files to Modify:**
+**Files Modified:**
 - `application/views/transactions/transactions.php`
 - `application/controllers/Transactions.php`
 - `public/js/pos.js`
@@ -525,7 +520,7 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 
 ---
 
-## Phase 5: Reports and Printing
+## Phase 5: Reports and Printing ✅ COMPLETED
 
 ### Task 5.1: Install Thermal Printer Library ✅
 **Priority:** P1  
@@ -538,8 +533,8 @@ $.get('/transactions/searchByImei?imei=999999999999999', function(data) {
 - [x] Test printer connectivity
 - [x] Configure printer IP in .env
 
-**Files to Modify:**
-- `composer.json` (created if not exists)
+**Files Created:**
+- `composer.json`
 
 **Verification:**
 ```bash
@@ -563,7 +558,7 @@ composer show mike42/escpos-php
 - [x] Handle printer offline gracefully
 - [x] Add fallback to PDF generation (placeholder)
 
-**Files to Create:**
+**Files Created:**
 - `application/libraries/Thermal_printer.php`
 
 **Acceptance Criteria:**
@@ -589,10 +584,10 @@ composer show mike42/escpos-php
 - [x] Add date range filter
 - [x] Add export to PDF option (print functionality)
 
-**Files to Modify:**
+**Files Modified:**
 - `application/controllers/Reports.php`
 
-**Files to Create:**
+**Files Created:**
 - `application/views/reports/profit_daily.php`
 - `application/views/reports/profit_monthly.php`
 
