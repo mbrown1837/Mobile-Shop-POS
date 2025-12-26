@@ -45,7 +45,7 @@ CREATE TABLE `admin` (
 
 -- Admin user: admin@shop.com / admin123
 INSERT INTO `admin` (`id`, `first_name`, `last_name`, `email`, `password`, `role`, `mobile1`, `mobile2`, `created_on`, `last_login`, `account_status`, `deleted`) VALUES
-(1, 'Admin', 'User', 'admin@shop.com', '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Super', NULL, NULL, NOW(), NULL, 1, 0);
+(1, 'Admin', 'User', 'admin@shop.com', '$2y$12$200Hzfz8E0pcLGPAQEDW5OjAAcTA60kBBsIu4ChUIeNtU/er0J0uu', 'Super', NULL, NULL, NOW(), NULL, 1, 0);
 
 
 -- ============================================

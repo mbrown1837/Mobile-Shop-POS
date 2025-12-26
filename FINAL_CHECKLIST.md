@@ -5,6 +5,7 @@
 ### Configuration Files Fixed ✅
 - [x] `application/config/config.php` - base_url set to `/mobile-shop-pos/`
 - [x] `.htaccess` - RewriteBase set to `/mobile-shop-pos`
+- [x] `public/js/main.js` - appRoot set to `mobile-shop-pos` (AJAX fix)
 - [x] `index.php` - PHP 8.2 compatibility, .env loader, timezone
 - [x] `application/views/home.php` - Removed 1410 branding
 

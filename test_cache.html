@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cache Test - Mobile Shop POS</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 20px; margin: 10px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; border-radius: 4px; }
+        .btn-danger { background: #dc3545; color: white; border: none; border-radius: 4px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Cache Test - Mobile Shop POS</h1>
+    
+    <div class="box">
+        <h2>Step 1: Check JavaScript Files</h2>
+        <p>This will tell you if your browser is loading the NEW or OLD JavaScript files.</p>
+        <div id="jsCheck"></div>
+    </div>
+
+    <div class="box">
+        <h2>Step 2: Test appRoot Variable</h2>
+        <p>The appRoot should be: <code>http://localhost/mobile-shop-pos/</code></p>
+        <div id="appRootCheck"></div>
+    </div>
+
+    <div class="box">
+        <h2>Step 3: Test Login Endpoint</h2>
+        <button class="btn-primary" onclick="testLogin()">Test Login Endpoint</button>
+        <div id="loginTest"></div>
+    </div>
+
+    <div class="box">
+        <h2>Step 4: Clear Cache Instructions</h2>
+        <div class="warning">
+            <p><strong>If tests fail, you MUST clear your cache:</strong></p>
+            <ol>
+                <li><strong>Method 1 (Fastest):</strong> Press <code>Ctrl + Shift + N</code> to open Incognito mode, then test there</li>
+                <li><strong>Method 2:</strong> Press <code>Ctrl + Shift + Delete</code>, select "Cached images and files", click "Clear data"</li>
+                <li><strong>Method 3:</strong> Press <code>Ctrl + F5</code> multiple times</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="public/js/jquery.min.js"></script>
+    <script src="public/js/main.js?v=<?php echo time(); ?>"></script>
+    <script>
+        // Check if main.js loaded correctly
+        setTimeout(function() {
+            var jsCheckDiv = document.getElementById('jsCheck');
+            
+            if (typeof appRoot !== 'undefined') {
+                jsCheckDiv.innerHTML = '<p class="success">✅ main.js loaded successfully!</p>';
+            } else {
+                jsCheckDiv.innerHTML = '<p class="error">❌ main.js NOT loaded or appRoot not defined!</p>';
+            }
+        }, 100);
+
+        // Check appRoot value
+        setTimeout(function() {
+            var appRootCheckDiv = document.getElementById('appRootCheck');
+            
+            if (typeof appRoot !== 'undefined') {
+                var expected = 'http://localhost/mobile-shop-pos/';
+                var actual = appRoot;
+                
+                if (actual === expected) {
+                    appRootCheckDiv.innerHTML = '<p class="success">✅ appRoot is CORRECT!</p><pre>appRoot = "' + actual + '"</pre>';
+                } else {
+                    appRootCheckDiv.innerHTML = '<p class="error">❌ appRoot is WRONG!</p>' +
+                        '<p>Expected: <code>' + expected + '</code></p>' +
+                        '<p>Actual: <code>' + actual + '</code></p>' +
+                        '<p class="warning"><strong>This means your browser is using CACHED JavaScript!</strong></p>';
+                }
+            } else {
+                appRootCheckDiv.innerHTML = '<p class="error">❌ appRoot not defined!</p>';
+            }
+        }, 200);
+
+        function testLogin() {
+            var loginTestDiv = document.getElementById('loginTest');
+            loginTestDiv.innerHTML = '<p>Testing login endpoint...</p>';
+            
+            if (typeof appRoot === 'undefined') {
+                loginTestDiv.innerHTML = '<p class="error">❌ Cannot test - appRoot not defined!</p>';
+                return;
+            }
+            
+            var loginUrl = appRoot + 'home/login';
+            loginTestDiv.innerHTML += '<p>Testing URL: <code>' + loginUrl + '</code></p>';
+            
+            $.ajax({
+                url: loginUrl,
+                method: 'POST',
+                data: { email: 'test@test.com', password: 'test' },
+                success: function(response) {
+                    loginTestDiv.innerHTML += '<p class="success">✅ Endpoint is reachable!</p>';
+                    loginTestDiv.innerHTML += '<p>Response: <pre>' + JSON.stringify(response, null, 2) + '</pre></p>';
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.status === 404) {
+                        loginTestDiv.innerHTML += '<p class="error">❌ 404 Not Found!</p>';
+                        loginTestDiv.innerHTML += '<p class="warning"><strong>Your browser is using CACHED JavaScript with wrong URLs!</strong></p>';
+                        loginTestDiv.innerHTML += '<p><strong>SOLUTION: Clear your cache or use Incognito mode!</strong></p>';
+                    } else {
+                        loginTestDiv.innerHTML += '<p class="warning">⚠️ Got response (not 404): ' + xhr.status + '</p>';
+                        loginTestDiv.innerHTML += '<p>This is actually good - endpoint exists!</p>';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

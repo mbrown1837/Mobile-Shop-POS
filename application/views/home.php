@@ -91,8 +91,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 
         <!-- Javascript -->
-        <script src="<?=base_url()?>public/js/main.js"></script>
-        <script src="<?=base_url()?>public/js/access.js"></script>
+        <script src="<?=base_url()?>public/js/main.js?v=<?=time()?>"></script>
+        <script src="<?=base_url()?>public/js/access.js?v=<?=time()?>"></script>
         <script src="<?=base_url()?>public/js/jquery.backstretch.min.js"></script>
         <!--Javascript--->
 

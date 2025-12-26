@@ -1,6 +1,6 @@
 'use strict';
 
-var appRoot = setAppRoot("", "mini-inventory-and-sales-management-system");
+var appRoot = setAppRoot("", "mobile-shop-pos");
 var spinnerClass = 'fa fa-spinner faa-spin animated';
 
 $(document).ready(function(){
