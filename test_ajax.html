@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AJAX Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>Testing AJAX Connection</h2>
+    <button id="testBtn">Test AJAX</button>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        var appRoot = "http://localhost/mobile-shop-pos/";
+        
+        $('#testBtn').click(function() {
+            $('#result').html('Testing...');
+            
+            $.ajax({
+                url: appRoot + 'test_ajax.php',
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    $('#result').html('<strong style="color: green;">SUCCESS!</strong><br>' + 
+                                     'Status: ' + data.status + '<br>' +
+                                     'Message: ' + data.message + '<br>' +
+                                     'Time: ' + data.timestamp);
+                },
+                error: function(xhr, status, error) {
+                    $('#result').html('<strong style="color: red;">ERROR!</strong><br>' + 
+                                     'Status: ' + xhr.status + '<br>' +
+                                     'Error: ' + error + '<br>' +
+                                     'Response: ' + xhr.responseText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AppRoot Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>AppRoot Configuration Test</h2>
+    
+    <div style="margin: 20px; padding: 15px; border: 1px solid #ccc;">
+        <h3>Current Configuration:</h3>
+        <p><strong>Window Location:</strong> <span id="windowLocation"></span></p>
+        <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+        <p><strong>AppRoot (from main.js):</strong> <span id="appRoot"></span></p>
+        
+        <h3>Test URLs:</h3>
+        <p><strong>Login URL:</strong> <span id="loginUrl"></span></p>
+        <p><strong>Total Earned URL:</strong> <span id="totalEarnedUrl"></span></p>
+        
+        <h3>Expected URLs:</h3>
+        <p>✓ Login: http://localhost/mobile-shop-pos/access/login</p>
+        <p>✓ Total Earned: http://localhost/mobile-shop-pos/misc/totalearnedtoday</p>
+    </div>
+
+    <script src="public/js/main.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#windowLocation').text(window.location.href);
+            $('#hostname').text(window.location.hostname);
+            $('#appRoot').text(appRoot);
+            $('#loginUrl').text(appRoot + 'access/login');
+            $('#totalEarnedUrl').text(appRoot + 'misc/totalearnedtoday');
+            
+            // Check if URLs are correct
+            var expectedAppRoot = 'http://localhost/mobile-shop-pos/';
+            if (appRoot === expectedAppRoot) {
+                $('body').prepend('<div style="background: #4CAF50; color: white; padding: 15px; text-align: center; font-size: 18px;">✓ AppRoot is CORRECT!</div>');
+            } else {
+                $('body').prepend('<div style="background: #f44336; color: white; padding: 15px; text-align: center; font-size: 18px;">✗ AppRoot is WRONG! Expected: ' + expectedAppRoot + '</div>');
+            }
+        });
+    </script>
+</body>
+</html>

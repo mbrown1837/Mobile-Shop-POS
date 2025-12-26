@@ -3,6 +3,9 @@
  * Handles customer CRUD operations and payment recording
  */
 
+// Use appRoot from main.js
+var baseUrl = appRoot;
+
 $(document).ready(function() {
     // Load customers on page load
     if ($('#customerListTable').length) {

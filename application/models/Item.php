@@ -73,18 +73,25 @@ class Item extends CI_Model{
     */
     
     /**
-     * 
+     * Enhanced unified search - searches by name, code, IMEI, brand, model
      * @param type $value
      * @return boolean
      */
     public function itemsearch($value){
-        $q = "SELECT * FROM items 
-            WHERE 
-            name LIKE '%".$this->db->escape_like_str($value)."%'
-            || 
-            code LIKE '%".$this->db->escape_like_str($value)."%'";
+        $escaped_value = $this->db->escape_like_str($value);
         
-        $run_q = $this->db->query($q, [$value, $value]);
+        // Search in items table AND item_serials table (for IMEI)
+        $q = "SELECT DISTINCT items.* FROM items 
+            LEFT JOIN item_serials ON items.id = item_serials.item_id
+            WHERE 
+            items.name LIKE '%".$escaped_value."%'
+            OR items.code LIKE '%".$escaped_value."%'
+            OR items.brand LIKE '%".$escaped_value."%'
+            OR items.model LIKE '%".$escaped_value."%'
+            OR item_serials.imei_number LIKE '%".$escaped_value."%'
+            ORDER BY items.name ASC";
+        
+        $run_q = $this->db->query($q);
         
         if($run_q->num_rows() > 0){
             return $run_q->result();

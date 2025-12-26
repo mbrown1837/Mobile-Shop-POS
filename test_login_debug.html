@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Debug Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-left: 3px solid #333; }
+        .success { border-color: green; background: #e8f5e9; }
+        .error { border-color: red; background: #ffebee; }
+        .info { border-color: blue; background: #e3f2fd; }
+        input { padding: 8px; width: 300px; margin: 5px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Login Debug Test</h2>
+    
+    <div style="margin: 20px 0;">
+        <label>Email:</label><br>
+        <input type="email" id="email" value="admin@shop.com"><br>
+        
+        <label>Password:</label><br>
+        <input type="password" id="password" value="admin123"><br><br>
+        
+        <button id="loginBtn">Test Login with Full Debug</button>
+    </div>
+    
+    <h3>Debug Log:</h3>
+    <div id="debugLog"></div>
+
+    <script>
+        var appRoot = "http://localhost/mobile-shop-pos/";
+        
+        function log(message, type) {
+            type = type || 'info';
+            var timestamp = new Date().toLocaleTimeString();
+            $('#debugLog').append(
+                '<div class="log ' + type + '">' +
+                '<strong>[' + timestamp + ']</strong> ' + message +
+                '</div>'
+            );
+        }
+        
+        // Load main.js to get handleLogin function
+        log('Loading main.js...', 'info');
+        $.getScript(appRoot + 'public/js/main.js')
+            .done(function() {
+                log('✓ main.js loaded successfully', 'success');
+                log('✓ appRoot is: ' + appRoot, 'info');
+                
+                // Check if handleLogin exists
+                if (typeof handleLogin === 'function') {
+                    log('✓ handleLogin function exists', 'success');
+                } else {
+                    log('✗ handleLogin function NOT FOUND!', 'error');
+                }
+            })
+            .fail(function() {
+                log('✗ Failed to load main.js', 'error');
+            });
+        
+        $('#loginBtn').click(function() {
+            var email = $('#email').val();
+            var password = $('#password').val();
+            
+            log('=== Starting Login Test ===', 'info');
+            log('Email: ' + email, 'info');
+            log('Password: ' + (password ? '***' : '(empty)'), 'info');
+            
+            if (!email || !password) {
+                log('✗ Email or password is empty', 'error');
+                return;
+            }
+            
+            // Check if handleLogin function exists
+            if (typeof handleLogin !== 'function') {
+                log('✗ handleLogin function not available, using direct AJAX', 'error');
+                
+                // Direct AJAX as fallback
+                $.ajax({
+                    url: appRoot + 'access/login',
+                    method: 'POST',
+                    data: { email: email, password: password },
+                    dataType: 'json',
+                    success: function(data) {
+                        log('✓ Direct AJAX Success: ' + JSON.stringify(data), 'success');
+                    },
+                    error: function(xhr, status, error) {
+                        log('✗ Direct AJAX Error: ' + xhr.status + ' ' + error, 'error');
+                    }
+                });
+                return;
+            }
+            
+            log('Calling handleLogin()...', 'info');
+            
+            // Use handleLogin function
+            handleLogin(email, password, function(returnedData) {
+                log('handleLogin callback received', 'info');
+                log('Response: ' + JSON.stringify(returnedData), 'info');
+                
+                if (returnedData.status === 1) {
+                    log('✓ Login successful!', 'success');
+                    log('Session should be created', 'success');
+                    log('You can now go to: ' + appRoot + 'dashboard', 'success');
+                } else {
+                    log('✗ Login failed: ' + returnedData.msg, 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

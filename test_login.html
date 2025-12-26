@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>Direct Login Test</h2>
+    
+    <div style="margin: 20px;">
+        <label>Email:</label><br>
+        <input type="email" id="email" value="admin@shop.com" style="width: 300px; padding: 5px;"><br><br>
+        
+        <label>Password:</label><br>
+        <input type="password" id="password" value="admin123" style="width: 300px; padding: 5px;"><br><br>
+        
+        <button id="loginBtn" style="padding: 10px 20px;">Test Login</button>
+    </div>
+    
+    <div id="result" style="margin: 20px; padding: 15px; border: 1px solid #ccc; background: #f5f5f5;"></div>
+
+    <script>
+        var appRoot = "http://localhost/mobile-shop-pos/";
+        
+        $('#loginBtn').click(function() {
+            var email = $('#email').val();
+            var password = $('#password').val();
+            
+            $('#result').html('<strong>Testing login...</strong>');
+            
+            $.ajax({
+                url: appRoot + 'access/login',
+                method: 'POST',
+                data: { email: email, password: password },
+                dataType: 'json',
+                success: function(data) {
+                    $('#result').html(
+                        '<strong style="color: green;">SUCCESS!</strong><br><br>' + 
+                        '<strong>Response:</strong><br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>'
+                    );
+                },
+                error: function(xhr, status, error) {
+                    $('#result').html(
+                        '<strong style="color: red;">ERROR!</strong><br><br>' + 
+                        '<strong>Status Code:</strong> ' + xhr.status + '<br>' +
+                        '<strong>Status Text:</strong> ' + xhr.statusText + '<br>' +
+                        '<strong>Error:</strong> ' + error + '<br><br>' +
+                        '<strong>Response Text:</strong><br>' +
+                        '<pre>' + xhr.responseText + '</pre>'
+                    );
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customers UI Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-pass { background: #d4edda; border-color: #c3e6cb; }
+        .test-fail { background: #f8d7da; border-color: #f5c6cb; }
+        .test-pending { background: #fff3cd; border-color: #ffeaa7; }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .status { font-weight: bold; padding: 5px 10px; border-radius: 3px; }
+        .status-pass { background: #28a745; color: white; }
+        .status-fail { background: #dc3545; color: white; }
+        .status-pending { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Customers UI Test Suite</h1>
+        <p>Testing all customer management features...</p>
+
+        <div class="test-section test-pending" id="test1">
+            <h3>Test 1: Page Load</h3>
+            <p>Status: <span class="status status-pending">PENDING</span></p>
+            <p>Checking if customers page loads correctly...</p>
+            <button class="btn btn-primary" onclick="testPageLoad()">Run Test</button>
+            <div id="test1-result"></div>
+        </div>
+
+        <div class="test-section test-pending" id="test2">
+            <h3>Test 2: Add Customer Modal</h3>
+            <p>Status: <span class="status status-pending">PENDING</span></p>
+            <p>Checking if add customer modal opens...</p>
+            <button class="btn btn-primary" onclick="testAddModal()">Run Test</button>
+            <div id="test2-result"></div>
+        </div>
+
+        <div class="test-section test-pending" id="test3">
+            <h3>Test 3: Customer List Load</h3>
+            <p>Status: <span class="status status-pending">PENDING</span></p>
+            <p>Checking if customer list loads via AJAX...</p>
+            <button class="btn btn-primary" onclick="testCustomerList()">Run Test</button>
+            <div id="test3-result"></div>
+        </div>
+
+        <div class="test-section test-pending" id="test4">
+            <h3>Test 4: Search Functionality</h3>
+            <p>Status: <span class="status status-pending">PENDING</span></p>
+            <p>Checking if search works...</p>
+            <button class="btn btn-primary" onclick="testSearch()">Run Test</button>
+            <div id="test4-result"></div>
+        </div>
+
+        <div class="test-section test-pending" id="test5">
+            <h3>Test 5: JavaScript Functions</h3>
+            <p>Status: <span class="status status-pending">PENDING</span></p>
+            <p>Checking if all JS functions are defined...</p>
+            <button class="btn btn-primary" onclick="testJSFunctions()">Run Test</button>
+            <div id="test5-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Test Summary</h3>
+            <p><strong>Total Tests:</strong> 5</p>
+            <p><strong>Passed:</strong> <span id="passCount">0</span></p>
+            <p><strong>Failed:</strong> <span id="failCount">0</span></p>
+            <p><strong>Pending:</strong> <span id="pendingCount">5</span></p>
+        </div>
+    </div>
+
+    <script>
+        var appRoot = "http://localhost/mobile-shop-pos/";
+        var passCount = 0;
+        var failCount = 0;
+        var pendingCount = 5;
+
+        function updateCounts() {
+            $('#passCount').text(passCount);
+            $('#failCount').text(failCount);
+            $('#pendingCount').text(pendingCount);
+        }
+
+        function markPass(testId) {
+            $('#' + testId).removeClass('test-pending test-fail').addClass('test-pass');
+            $('#' + testId + ' .status').removeClass('status-pending status-fail').addClass('status-pass').text('PASS');
+            passCount++;
+            pendingCount--;
+            updateCounts();
+        }
+
+        function markFail(testId, error) {
+            $('#' + testId).removeClass('test-pending test-pass').addClass('test-fail');
+            $('#' + testId + ' .status').removeClass('status-pending status-pass').addClass('status-fail').text('FAIL');
+            $('#' + testId + '-result').html('<div class="alert alert-danger">' + error + '</div>');
+            failCount++;
+            pendingCount--;
+            updateCounts();
+        }
+
+        function testPageLoad() {
+            $.ajax({
+                url: appRoot + 'customers',
+                method: 'GET',
+                success: function(html) {
+                    if (html.indexOf('customerListTable') > -1) {
+                        markPass('test1');
+                        $('#test1-result').html('<div class="alert alert-success">✓ Page loads correctly with customer list table</div>');
+                    } else {
+                        markFail('test1', 'Page loaded but customer list table not found');
+                    }
+                },
+                error: function(xhr) {
+                    markFail('test1', 'Failed to load page: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            });
+        }
+
+        function testAddModal() {
+            $.ajax({
+                url: appRoot + 'customers',
+                method: 'GET',
+                success: function(html) {
+                    if (html.indexOf('addCustomerModal') > -1 && 
+                        html.indexOf('customerName') > -1 && 
+                        html.indexOf('customerPhone') > -1) {
+                        markPass('test2');
+                        $('#test2-result').html('<div class="alert alert-success">✓ Add customer modal exists with all required fields</div>');
+                    } else {
+                        markFail('test2', 'Add customer modal or required fields not found');
+                    }
+                },
+                error: function(xhr) {
+                    markFail('test2', 'Failed to check modal: ' + xhr.status);
+                }
+            });
+        }
+
+        function testCustomerList() {
+            $.ajax({
+                url: appRoot + 'customers/loadCustomers',
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.customerTable) {
+                        markPass('test3');
+                        $('#test3-result').html('<div class="alert alert-success">✓ Customer list loads via AJAX successfully</div>');
+                    } else {
+                        markFail('test3', 'Response received but customerTable not found');
+                    }
+                },
+                error: function(xhr) {
+                    markFail('test3', 'AJAX request failed: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            });
+        }
+
+        function testSearch() {
+            $.ajax({
+                url: appRoot + 'customers/search',
+                method: 'GET',
+                data: { q: 'test' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.hasOwnProperty('status') && response.hasOwnProperty('results')) {
+                        markPass('test4');
+                        $('#test4-result').html('<div class="alert alert-success">✓ Search endpoint responds correctly</div>');
+                    } else {
+                        markFail('test4', 'Search response format incorrect');
+                    }
+                },
+                error: function(xhr) {
+                    markFail('test4', 'Search request failed: ' + xhr.status);
+                }
+            });
+        }
+
+        function testJSFunctions() {
+            var requiredFunctions = [
+                'loadCustomers',
+                'openEditModal',
+                'openPaymentModal',
+                'deleteCustomer',
+                'viewLedger'
+            ];
+
+            var missing = [];
+            requiredFunctions.forEach(function(func) {
+                if (typeof window[func] !== 'function') {
+                    missing.push(func);
+                }
+            });
+
+            if (missing.length === 0) {
+                markPass('test5');
+                $('#test5-result').html('<div class="alert alert-success">✓ All required JavaScript functions are defined</div>');
+            } else {
+                markFail('test5', 'Missing functions: ' + missing.join(', ') + '<br>Note: Functions may be defined after page load');
+            }
+        }
+
+        // Auto-run all tests on page load
+        $(document).ready(function() {
+            console.log('Test suite loaded. Click buttons to run tests.');
+        });
+    </script>
+</body>
+</html>

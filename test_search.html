@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Test - Mobile Shop POS</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .test-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .search-box { width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 4px; }
+        .search-box:focus { border-color: #007bff; outline: none; }
+        .results { margin-top: 20px; }
+        .result-item { padding: 10px; margin: 5px 0; background: white; border: 1px solid #ddd; border-radius: 3px; }
+        .result-item:hover { background: #f0f8ff; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; margin-left: 5px; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-info { background: #17a2b8; color: white; }
+        .badge-warning { background: #ffc107; color: black; }
+        .loading { color: #007bff; font-style: italic; }
+        .error { color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 3px; }
+        .success { color: #155724; padding: 10px; background: #d4edda; border-radius: 3px; }
+        .test-examples { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .test-examples h4 { margin-top: 0; color: #856404; }
+        .test-examples button { margin: 5px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .test-examples button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔍 Enhanced Search Test</h2>
+        
+        <div class="test-section">
+            <h3>Test Unified Search</h3>
+            <p>This search now works with: <strong>Name, Code, IMEI, Brand, Model</strong></p>
+            
+            <input type="text" id="searchInput" class="search-box" placeholder="Search by Name, Code, IMEI, Brand, Model...">
+            
+            <div class="test-examples">
+                <h4>Quick Test Examples:</h4>
+                <button onclick="testSearch('iPhone')">Search: iPhone</button>
+                <button onclick="testSearch('Apple')">Search: Apple</button>
+                <button onclick="testSearch('MOB')">Search: MOB</button>
+                <button onclick="testSearch('123456789012345')">Search: IMEI</button>
+                <button onclick="testSearch('Samsung')">Search: Samsung</button>
+            </div>
+            
+            <div id="searchResults" class="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Search Features:</h3>
+            <ul>
+                <li>✓ Searches across multiple fields simultaneously</li>
+                <li>✓ Includes IMEI numbers from serial table</li>
+                <li>✓ Returns distinct items (no duplicates)</li>
+                <li>✓ Case-insensitive search</li>
+                <li>✓ Partial matching (finds "Phone" in "iPhone")</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        var appRoot = "http://localhost/mobile-shop-pos/";
+        
+        // Real-time search with debouncing
+        var searchTimeout;
+        $('#searchInput').on('input', function() {
+            clearTimeout(searchTimeout);
+            var query = $(this).val().trim();
+            
+            if (query.length < 2) {
+                $('#searchResults').html('');
+                return;
+            }
+            
+            searchTimeout = setTimeout(function() {
+                performSearch(query);
+            }, 300); // 300ms debounce
+        });
+        
+        function testSearch(query) {
+            $('#searchInput').val(query);
+            performSearch(query);
+        }
+        
+        function performSearch(query) {
+            $('#searchResults').html('<p class="loading">Searching for "' + query + '"...</p>');
+            
+            $.ajax({
+                url: appRoot + 'search/itemSearch',
+                method: 'GET',
+                data: { v: query },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.itemsListTable && response.itemsListTable !== "No match found") {
+                        $('#searchResults').html(
+                            '<div class="success">✓ Search successful! Results found.</div>' +
+                            '<div style="margin-top: 15px;">' + response.itemsListTable + '</div>'
+                        );
+                    } else {
+                        $('#searchResults').html(
+                            '<div class="error">No items found matching "' + query + '"</div>' +
+                            '<p>Try searching for:</p>' +
+                            '<ul>' +
+                            '<li>Item name (e.g., "iPhone", "Samsung")</li>' +
+                            '<li>Item code (e.g., "MOB001")</li>' +
+                            '<li>IMEI number (15 digits)</li>' +
+                            '<li>Brand name (e.g., "Apple")</li>' +
+                            '<li>Model name (e.g., "13 Pro")</li>' +
+                            '</ul>'
+                        );
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#searchResults').html(
+                        '<div class="error">' +
+                        '<strong>Error!</strong> ' + xhr.status + ' ' + error + '<br>' +
+                        'Make sure the server is running and the search endpoint is accessible.' +
+                        '</div>'
+                    );
+                }
+            });
+        }
+        
+        // Test on page load
+        $(document).ready(function() {
+            console.log('Search test page loaded');
+            console.log('AppRoot:', appRoot);
+            console.log('Search endpoint:', appRoot + 'search/itemSearch');
+        });
+    </script>
+</body>
+</html>

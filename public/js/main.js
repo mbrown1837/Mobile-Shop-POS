@@ -1,6 +1,6 @@
 'use strict';
 
-var appRoot = setAppRoot("", "mobile-shop-pos");
+var appRoot = setAppRoot("mobile-shop-pos", "mobile-shop-pos");
 var spinnerClass = 'fa fa-spinner faa-spin animated';
 
 $(document).ready(function(){
@@ -573,7 +573,6 @@ function checkLogin(){
  */
 function handleLogin(email, password, callback){
     var jsonToReturn = "";
-    
     $.ajax(appRoot+'access/login', {
         method: "POST",
         data: {email:email, password:password}

@@ -12,15 +12,11 @@ defined('BASEPATH') OR exit('');
                         <button class="btn btn-primary btn-sm" id='createItem'>Add New Item</button>
                     </div>
 
-                    <div class="col-sm-3 form-inline form-group-sm">
+                    <div class="col-sm-2 form-inline form-group-sm">
                         <label for="itemsListPerPage">Show</label>
-                        <select id="itemsListPerPage" class="form-control">
-                            <option value="1">1</option>
-                            <option value="5">5</option>
+                        <select id="itemsListPerPage" class="form-control input-sm">
                             <option value="10" selected>10</option>
-                            <option value="15">15</option>
                             <option value="20">20</option>
-                            <option value="30">30</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
@@ -29,7 +25,7 @@ defined('BASEPATH') OR exit('');
                     
                     <div class="col-sm-2 form-group-sm form-inline">
                         <label for="categoryFilter">Category</label>
-                        <select id="categoryFilter" class="form-control">
+                        <select id="categoryFilter" class="form-control input-sm">
                             <option value="">All</option>
                             <option value="mobile">Mobile</option>
                             <option value="accessory">Accessory</option>
@@ -39,21 +35,21 @@ defined('BASEPATH') OR exit('');
 
                     <div class="col-sm-3 form-group-sm form-inline">
                         <label for="itemsListSortBy">Sort by</label>
-                        <select id="itemsListSortBy" class="form-control">
-                            <option value="name-ASC">Item Name (A-Z)</option>
-                            <option value="code-ASC">Item Code (Ascending)</option>
-                            <option value="unitPrice-DESC">Unit Price (Highest first)</option>
-                            <option value="quantity-DESC">Quantity (Highest first)</option>
-                            <option value="name-DESC">Item Name (Z-A)</option>
-                            <option value="code-DESC">Item Code (Descending)</option>
-                            <option value="unitPrice-ASC">Unit Price (lowest first)</option>
-                            <option value="quantity-ASC">Quantity (lowest first)</option>
+                        <select id="itemsListSortBy" class="form-control input-sm">
+                            <option value="name-ASC">Name (A-Z)</option>
+                            <option value="name-DESC">Name (Z-A)</option>
+                            <option value="code-ASC">Code (Asc)</option>
+                            <option value="code-DESC">Code (Desc)</option>
+                            <option value="unitPrice-DESC">Price (High)</option>
+                            <option value="unitPrice-ASC">Price (Low)</option>
+                            <option value="quantity-DESC">Qty (High)</option>
+                            <option value="quantity-ASC">Qty (Low)</option>
                         </select>
                     </div>
 
-                    <div class="col-sm-2 form-inline form-group-sm">
+                    <div class="col-sm-3 form-inline form-group-sm">
                         <label for='itemSearch'><i class="fa fa-search"></i></label>
-                        <input type="search" id="itemSearch" class="form-control" placeholder="Search">
+                        <input type="search" id="itemSearch" class="form-control input-sm" placeholder="Search by Name, Code, IMEI, Brand, Model..." style="width: 100%;">
                     </div>
                 </div>
             </div>
