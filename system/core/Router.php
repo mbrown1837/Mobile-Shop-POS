@@ -112,6 +112,9 @@ class CI_Router {
 	 */
 	public $enable_query_strings = FALSE;
 
+	// Declare dynamic properties to fix PHP 8.2+ deprecation warnings
+	public $uri;
+
 	// --------------------------------------------------------------------
 
 	/**

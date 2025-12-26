@@ -125,6 +125,26 @@ class CI_Loader {
 		'user_agent' => 'agent'
 	);
 
+	// Declare dynamic properties to fix PHP 8.2+ deprecation warnings
+	public $load;
+	public $benchmark;
+	public $hooks;
+	public $config;
+	public $log;
+	public $utf8;
+	public $uri;
+	public $exceptions;
+	public $router;
+	public $output;
+	public $security;
+	public $input;
+	public $lang;
+	public $db;
+	public $session;
+	public $genlib;
+	public $genmod;
+	public $email;
+
 	// --------------------------------------------------------------------
 
 	/**

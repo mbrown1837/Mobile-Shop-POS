@@ -94,7 +94,8 @@ date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'Asia/Karachi');
 switch (ENVIRONMENT)
 {
 	case 'development':
-		error_reporting(-1);
+		// Suppress deprecation warnings in PHP 8.2+ to prevent session header issues
+		error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 		ini_set('display_errors', 1);
 	break;
 

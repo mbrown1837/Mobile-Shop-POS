@@ -92,6 +92,9 @@ class CI_URI {
 	 */
 	protected $_permitted_uri_chars;
 
+	// Declare dynamic properties to fix PHP 8.2+ deprecation warnings
+	public $config;
+
 	/**
 	 * Class constructor
 	 *

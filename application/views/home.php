@@ -57,9 +57,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <div class="container">
                     <div class="row">
                         <div class="col-sm-8 col-sm-offset-2 text">
-                            <div style="font-size:100px">
-                                <h1><img src="<?=base_url()?>public/images/logo_white.png" alt="1410-logo" height="150px"></h1>
-                            </div>
+                            <h1 style="color: white; font-size: 48px; font-weight: 300; margin-bottom: 30px;">
+                                Mobile Shop POS
+                            </h1>
                         </div>
                     </div>
                     <div class="row">
@@ -83,11 +83,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-sm-12 text-center" style="color:white">
-                            Designed and Developed by <a href="http://www.amirsanni.com/" target='_blank' class="text-primary">Amir Sanni</a> (2016)
-                        </div>
-                    </div>
+
                 </div>
             </div>
 
