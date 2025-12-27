@@ -68,9 +68,29 @@ class Items extends CI_Controller
     //set the sort order
     $orderBy = $this->input->get('orderBy', TRUE) ? $this->input->get('orderBy', TRUE) : "name";
     $orderFormat = $this->input->get('orderFormat', TRUE) ? $this->input->get('orderFormat', TRUE) : "ASC";
+    $category = $this->input->get('category', TRUE);
+    $searchTerm = $this->input->get('search', TRUE);
+
+    // If search term provided, use search method
+    if (!empty($searchTerm)) {
+      $data['allItems'] = $this->item->itemsearch($searchTerm);
+      $totalItems = $data['allItems'] ? count($data['allItems']) : 0;
+      $data['range'] = $totalItems > 0 ? "Found " . $totalItems . " item(s)" : "No items found";
+      $data['links'] = '';
+      $data['sn'] = 1;
+      $data['cum_total'] = $this->item->getItemsCumTotal();
+      
+      $json['itemsListTable'] = $this->load->view('items/itemslisttable', $data, TRUE);
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
 
     //count the total number of items in db
-    $totalItems = $this->db->count_all('items');
+    if ($category) {
+      $totalItems = $this->db->where('category', $category)->count_all_results('items');
+    } else {
+      $totalItems = $this->db->count_all('items');
+    }
 
     $this->load->library('pagination');
 
@@ -84,7 +104,10 @@ class Items extends CI_Controller
 
     $this->pagination->initialize($config); //initialize the library class
 
-    //get all items from db
+    //get all items from db with optional category filter
+    if ($category) {
+      $this->db->where('category', $category);
+    }
     $data['allItems'] = $this->item->getAll($orderBy, $orderFormat, $start, $limit);
     $data['range'] = $totalItems > 0 ? "Showing " . ($start + 1) . "-" . ($start + count($data['allItems'])) . " of " . $totalItems : "";
     $data['links'] = $this->pagination->create_links(); //page links

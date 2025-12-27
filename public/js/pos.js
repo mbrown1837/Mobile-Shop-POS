@@ -11,6 +11,66 @@ $(document).ready(function() {
     // Initialize
     loadTransactionList();
     initializeDatePicker();
+    initializeCustomerSelect();
+
+    // ========================================
+    // Customer Select Initialization
+    // ========================================
+    function initializeCustomerSelect() {
+        $('#customerSelect').select2({
+            placeholder: 'Search customer by name or phone',
+            allowClear: true,
+            ajax: {
+                url: baseUrl + 'index.php/customers/search',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.customers.map(function(customer) {
+                            return {
+                                id: customer.id,
+                                text: customer.name + ' - ' + customer.phone,
+                                customer: customer
+                            };
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+
+        // When customer is selected
+        $('#customerSelect').on('select2:select', function(e) {
+            const customer = e.params.data.customer;
+            selectedCustomerId = customer.id;
+            
+            // Show customer info
+            $('#customerName').text(customer.name);
+            $('#customerPhone').text(customer.phone);
+            
+            const balance = parseFloat(customer.balance || 0);
+            const creditLimit = parseFloat(customer.credit_limit || 0);
+            
+            $('#customerBalance').text('₨ ' + balance.toFixed(2))
+                .removeClass('positive negative')
+                .addClass(balance >= 0 ? 'positive' : 'negative');
+            
+            $('#customerCreditLimit').text('₨ ' + creditLimit.toFixed(2));
+            $('#customerInfoSection').removeClass('hidden');
+        });
+
+        // When customer is cleared
+        $('#customerSelect').on('select2:clear', function() {
+            selectedCustomerId = null;
+            $('#customerInfoSection').addClass('hidden');
+        });
+    }
 
     // ========================================
     // IMEI Search
@@ -31,7 +91,7 @@ $(document).ready(function() {
 
     function searchByImei(imei) {
         $.ajax({
-            url: baseUrl + 'transactions/searchByImei',
+            url: baseUrl + 'index.php/transactions/searchByImei',
             type: 'GET',
             data: { imei: imei },
             dataType: 'json',
@@ -75,7 +135,7 @@ $(document).ready(function() {
 
     function searchByItemCode(itemCode) {
         $.ajax({
-            url: baseUrl + 'items/getItemInfo',
+            url: baseUrl + 'index.php/items/getItemInfo',
             type: 'GET',
             data: { code: itemCode },
             dataType: 'json',

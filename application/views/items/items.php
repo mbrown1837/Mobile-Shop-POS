@@ -122,12 +122,27 @@ defined('BASEPATH') OR exit('');
                         
                         <div id="imeiFieldsContainer" style="display:none;">
                             <div class="row"><div class="col-sm-12">
+                                <label>Device Details</label>
+                            </div></div>
+                            
+                            <div class="row">
+                                <div class="col-sm-6 form-group-sm">
+                                    <label for="itemColor">Color</label>
+                                    <input type="text" id="itemColor" name="itemColor" placeholder="e.g., Black, White" maxlength="50" class="form-control">
+                                </div>
+                                <div class="col-sm-6 form-group-sm">
+                                    <label for="itemCostPrice">Cost Price (Optional)</label>
+                                    <input type="text" id="itemCostPrice" name="itemCostPrice" placeholder="Purchase cost" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="row"><div class="col-sm-12">
                                 <label>IMEI Numbers <span class="text-danger">*</span></label>
-                                <small class="text-muted">(15 digits)</small>
+                                <small class="text-muted">(15 digits each)</small>
                             </div></div>
                             <div id="imeiFieldsList"></div>
                             <div class="row"><div class="col-sm-12">
-                                <button type="button" class="btn btn-sm btn-success" id="addMoreImeiBtn"><i class="fa fa-plus"></i> Add IMEI</button>
+                                <button type="button" class="btn btn-sm btn-success" id="addMoreImeiBtn"><i class="fa fa-plus"></i> Add Another IMEI</button>
                             </div></div>
                             <span class="help-block errMsg" id="imeiFieldsErr"></span>
                         </div>

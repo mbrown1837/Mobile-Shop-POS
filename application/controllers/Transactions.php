@@ -1213,6 +1213,7 @@ class Transactions extends CI_Controller
     }
 
     // Check customer credit limit if applicable
+    $customer = null;
     if ($creditAmount > 0 && !empty($customerId)) {
       $this->load->model('customer');
       $customer = $this->customer->getById($customerId);
@@ -1231,6 +1232,10 @@ class Transactions extends CI_Controller
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
         return;
       }
+    } elseif (!empty($customerId)) {
+      // Load customer info even if no credit
+      $this->load->model('customer');
+      $customer = $this->customer->getById($customerId);
     }
 
     // Generate transaction reference
