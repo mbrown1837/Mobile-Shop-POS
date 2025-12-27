@@ -52,7 +52,7 @@ function getEarnings(year){
     
     $.ajax({
         type: 'GET',
-        url: appRoot+"dashboard/earningsGraph/"+yearToFetch,
+        url: appRoot+"index.php/dashboard/earningsGraph/"+yearToFetch,
         dataType: "html"
     }).done(function(data){
         var response = jQuery.parseJSON(data);
@@ -107,7 +107,7 @@ function loadPaymentMethodChart(year){
     
     $.ajax({
         type: 'GET',
-        url: appRoot+"dashboard/paymentmethodchart/"+yearToGet,
+        url: appRoot+"index.php/dashboard/paymentmethodchart/"+yearToGet,
         dataType: "html",
         success: function(data) {
             var response = jQuery.parseJSON(data);

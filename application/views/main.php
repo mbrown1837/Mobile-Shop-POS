@@ -92,18 +92,25 @@ defined('BASEPATH') or exit('');
               </a>
             </li>
 
+            <li class="<?= strpos($pageTitle, 'Customer') !== false ? 'active' : '' ?>">
+              <a href="<?= site_url('customers') ?>">
+                <i class="fa fa-users"></i>
+                Customers
+              </a>
+            </li>
+
+            <li class="<?= strpos($pageTitle, 'Report') !== false || strpos($pageTitle, 'Profit') !== false ? 'active' : '' ?>">
+              <a href="<?= site_url('reports') ?>">
+                <i class="fa fa-bar-chart"></i>
+                Reports
+              </a>
+            </li>
+
             <!--
                         <li class="<?= $pageTitle == 'Employees' ? 'active' : '' ?>">
                             <a href="<?= site_url('employees') ?>">
                                 <i class="fa fa-users"></i>
                                 Employees
-                            </a>
-                        </li>
-                        
-                        <li class="<?= $pageTitle == 'Reports' ? 'active' : '' ?>">
-                            <a href="<?= site_url('reports') ?>">
-                                <i class="fa fa-newspaper-o"></i>
-                                Reports
                             </a>
                         </li>
                         
@@ -184,6 +191,20 @@ defined('BASEPATH') or exit('');
               <a href="<?= site_url('items') ?>">
                 <i class="fa fa-shopping-cart"></i>
                 Inventory Items
+              </a>
+            </li>
+
+            <li class="<?= strpos($pageTitle, 'Customer') !== false ? 'active' : '' ?>">
+              <a href="<?= site_url('customers') ?>">
+                <i class="fa fa-users"></i>
+                Customers
+              </a>
+            </li>
+
+            <li class="<?= strpos($pageTitle, 'Report') !== false || strpos($pageTitle, 'Profit') !== false ? 'active' : '' ?>">
+              <a href="<?= site_url('reports') ?>">
+                <i class="fa fa-bar-chart"></i>
+                Reports
               </a>
             </li>
 
@@ -272,7 +293,7 @@ defined('BASEPATH') or exit('');
               </div>
               <div class="col-sm-12 form-group">
                 <label for='logInPassword' class="control-label">Password</label>
-                <input type="password" id='logInModalPassword' class="form-control checkField" placeholder="Password">
+                <input type="password" id='logInModalPassword' class="form-control checkField" placeholder="Password" autocomplete="current-password">
                 <span class="help-block errMsg" id="logInModalPasswordErr"></span>
               </div>
             </div>
