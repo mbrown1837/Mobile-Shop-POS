@@ -301,16 +301,14 @@ class Customers extends CI_Controller {
         $query = $this->input->get('q', TRUE);
 
         if (empty($query)) {
-            $json['status'] = 0;
-            $json['results'] = [];
+            $json['customers'] = [];
             $this->output->set_content_type('application/json')->set_output(json_encode($json));
             return;
         }
 
         $results = $this->customer->search($query, 10);
 
-        $json['status'] = 1;
-        $json['results'] = $results ?: [];
+        $json['customers'] = $results ?: [];
 
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
     }

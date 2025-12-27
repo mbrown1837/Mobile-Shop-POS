@@ -471,7 +471,7 @@ function drm_(){
 function totalEarnedToday(){
     $.ajax({
         method:"POST",
-        url: appRoot+"misc/totalearnedtoday"
+        url: appRoot+"index.php/misc/totalearnedtoday"
     }).done(function(returnedData){
         //paste the returnedData on the navbar to show total amount earned on current day
         $("#totalEarnedToday").html(returnedData.totalEarnedToday);

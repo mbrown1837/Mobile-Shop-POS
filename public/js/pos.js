@@ -57,11 +57,11 @@ $(document).ready(function() {
             const balance = parseFloat(customer.balance || 0);
             const creditLimit = parseFloat(customer.credit_limit || 0);
             
-            $('#customerBalance').text('₨ ' + balance.toFixed(2))
+            $('#customerBalance').text('Rs. ' + balance.toFixed(2))
                 .removeClass('positive negative')
                 .addClass(balance >= 0 ? 'positive' : 'negative');
             
-            $('#customerCreditLimit').text('₨ ' + creditLimit.toFixed(2));
+            $('#customerCreditLimit').text('Rs. ' + creditLimit.toFixed(2));
             $('#customerInfoSection').removeClass('hidden');
         });
 
@@ -261,10 +261,10 @@ $(document).ready(function() {
                                 '<span>Qty: 1</span>'
                             }
                             <br>
-                            <small>@ ₨ ${parseFloat(item.unitPrice).toFixed(2)}</small>
+                            <small>@ Rs. ${parseFloat(item.unitPrice).toFixed(2)}</small>
                         </div>
                         <div class="col-sm-2 text-right">
-                            <strong>₨ ${parseFloat(item.totalPrice).toFixed(2)}</strong>
+                            <strong class="currency">Rs. ${parseFloat(item.totalPrice).toFixed(2)}</strong>
                         </div>
                         <div class="col-sm-1 text-right">
                             <button class="btn btn-danger btn-xs remove-cart-item" data-cart-id="${cartItemId}">
@@ -282,11 +282,11 @@ $(document).ready(function() {
     }
 
     function updateTotals(totals) {
-        $('#subtotalAmount').text('₨ ' + parseFloat(totals.subtotal).toFixed(2));
-        $('#discountAmount').text('₨ ' + parseFloat(totals.discount_amount).toFixed(2));
-        $('#afterDiscountAmount').text('₨ ' + parseFloat(totals.after_discount).toFixed(2));
-        $('#vatAmount').text('₨ ' + parseFloat(totals.vat_amount).toFixed(2));
-        $('#grandTotalAmount').text('₨ ' + parseFloat(totals.grand_total).toFixed(2));
+        $('#subtotalAmount').text('Rs. ' + parseFloat(totals.subtotal).toFixed(2));
+        $('#discountAmount').text('Rs. ' + parseFloat(totals.discount_amount).toFixed(2));
+        $('#afterDiscountAmount').text('Rs. ' + parseFloat(totals.after_discount).toFixed(2));
+        $('#vatAmount').text('Rs. ' + parseFloat(totals.vat_amount).toFixed(2));
+        $('#grandTotalAmount').text('Rs. ' + parseFloat(totals.grand_total).toFixed(2));
     }
 
     // Remove item from cart
@@ -405,19 +405,19 @@ $(document).ready(function() {
     // Calculate change due
     $('#amountTendered').on('input', function() {
         const tendered = parseFloat($(this).val()) || 0;
-        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('₨ ', '').replace(',', '')) || 0;
+        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
         const change = tendered - grandTotal;
         
-        $('#changeDue').text('₨ ' + change.toFixed(2));
+        $('#changeDue').text('Rs. ' + change.toFixed(2));
     });
 
     // Calculate credit amount for partial payment
     $('#partialAmount').on('input', function() {
         const paid = parseFloat($(this).val()) || 0;
-        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('₨ ', '').replace(',', '')) || 0;
+        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
         const credit = grandTotal - paid;
         
-        $('#creditAmount').text('₨ ' + credit.toFixed(2));
+        $('#creditAmount').text('Rs. ' + credit.toFixed(2));
     });
 
     // ========================================

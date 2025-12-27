@@ -118,7 +118,7 @@ defined('BASEPATH') OR exit('');
                         <table class="table table-condensed">
                             <tr>
                                 <td>Subtotal:</td>
-                                <td class="text-right"><strong id="subtotalAmount">₨ 0.00</strong></td>
+                                <td class="text-right"><strong class="currency" id="subtotalAmount">Rs. 0.00</strong></td>
                             </tr>
                             <tr>
                                 <td>
@@ -126,11 +126,11 @@ defined('BASEPATH') OR exit('');
                                     <input type="number" id="discountPercent" class="form-control input-sm" 
                                            value="0" min="0" max="100" step="0.1" style="width: 80px; display: inline;">%
                                 </td>
-                                <td class="text-right"><strong id="discountAmount">₨ 0.00</strong></td>
+                                <td class="text-right"><strong class="currency" id="discountAmount">Rs. 0.00</strong></td>
                             </tr>
                             <tr>
                                 <td>After Discount:</td>
-                                <td class="text-right"><strong id="afterDiscountAmount">₨ 0.00</strong></td>
+                                <td class="text-right"><strong class="currency" id="afterDiscountAmount">Rs. 0.00</strong></td>
                             </tr>
                             <tr>
                                 <td>
@@ -138,11 +138,11 @@ defined('BASEPATH') OR exit('');
                                     <input type="number" id="vatPercent" class="form-control input-sm" 
                                            value="0" min="0" max="100" step="0.1" style="width: 80px; display: inline;">%
                                 </td>
-                                <td class="text-right"><strong id="vatAmount">₨ 0.00</strong></td>
+                                <td class="text-right"><strong class="currency" id="vatAmount">Rs. 0.00</strong></td>
                             </tr>
                             <tr class="success">
                                 <td><h4>Grand Total:</h4></td>
-                                <td class="text-right"><h4 id="grandTotalAmount">₨ 0.00</h4></td>
+                                <td class="text-right"><h4 class="currency-lg" id="grandTotalAmount">Rs. 0.00</h4></td>
                             </tr>
                         </table>
                     </div>

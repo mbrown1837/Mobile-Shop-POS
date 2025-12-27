@@ -24,15 +24,15 @@ defined('BASEPATH') OR exit('');
                         <td><strong><?=htmlspecialchars($customer->name)?></strong></td>
                         <td><?=htmlspecialchars($customer->phone)?></td>
                         <td>
-                            <span class="<?=$customer->current_balance > 0 ? 'text-danger' : 'text-success'?>">
-                                <strong>₨<?=number_format($customer->current_balance, 2)?></strong>
+                            <span class="currency <?=$customer->current_balance > 0 ? 'balance-negative' : 'balance-positive'?>">
+                                Rs. <?=number_format($customer->current_balance, 2)?>
                             </span>
                         </td>
-                        <td>₨<?=number_format($customer->credit_limit, 2)?></td>
+                        <td><span class="currency">Rs. <?=number_format($customer->credit_limit, 2)?></span></td>
                         <td>
                             <?php $available = $customer->credit_limit - $customer->current_balance; ?>
-                            <span class="<?=$available > 0 ? 'text-success' : 'text-danger'?>">
-                                ₨<?=number_format($available, 2)?>
+                            <span class="currency <?=$available > 0 ? 'balance-positive' : 'balance-negative'?>">
+                                Rs. <?=number_format($available, 2)?>
                             </span>
                         </td>
                         <td>

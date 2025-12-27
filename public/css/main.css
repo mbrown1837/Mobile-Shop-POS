@@ -161,3 +161,35 @@ body{
 .custom-active{
     background-color: #333;
 }
+/* Cur
+rency Formatting - Consistent Rs. display */
+.currency {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.currency-sm {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.currency-lg {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* Balance colors */
+.balance-positive {
+    color: #28a745;
+}
+
+.balance-negative {
+    color: #dc3545;
+}
+
+.balance-neutral {
+    color: #6c757d;
+}
