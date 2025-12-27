@@ -558,4 +558,63 @@ class Items extends CI_Controller
 
     $this->output->set_content_type('application/json')->set_output(json_encode($json));
   }
+
+  /**
+   * Get available mobile units (grouped by color and cost)
+   * Each unit may have 1 or 2 IMEIs (single/dual SIM)
+   */
+  public function getAvailableMobileUnits() {
+    $this->genlib->ajaxOnly();
+    
+    $itemId = $this->input->get('item_id', TRUE);
+    
+    if (empty($itemId)) {
+      $json['status'] = 0;
+      $json['msg'] = "Item ID is required";
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    // Get all available IMEIs for this item
+    $imeis = $this->item->getAvailableSerials($itemId);
+
+    if (!$imeis || count($imeis) == 0) {
+      $json['status'] = 0;
+      $json['msg'] = "No available units";
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    // Group IMEIs by color and cost_price to create mobile units
+    // Same color + same cost = same mobile unit (may have 1 or 2 IMEIs for dual SIM)
+    $units = [];
+    $grouped = [];
+    
+    foreach ($imeis as $imei) {
+      // Create unique key for grouping
+      $color = $imei->color ?: 'No Color';
+      $cost = $imei->cost_price ?: '0';
+      $key = $color . '_' . $cost;
+      
+      if (!isset($grouped[$key])) {
+        $grouped[$key] = [
+          'imeis' => [],
+          'color' => $imei->color,
+          'cost_price' => $imei->cost_price
+        ];
+      }
+      
+      $grouped[$key]['imeis'][] = $imei->imei_number;
+    }
+
+    // Convert grouped data to units array
+    foreach ($grouped as $unit) {
+      $units[] = $unit;
+    }
+
+    $json['status'] = 1;
+    $json['units'] = $units;
+
+    $this->output->set_content_type('application/json')->set_output(json_encode($json));
+  }
 }

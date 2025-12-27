@@ -101,7 +101,12 @@ defined('BASEPATH') OR exit('');
             <!-- Customer Section -->
             <div class="panel panel-success">
                 <div class="panel-heading">
-                    <h4 class="panel-title"><i class="fa fa-user"></i> Customer</h4>
+                    <h4 class="panel-title">
+                        <i class="fa fa-user"></i> Customer
+                        <button type="button" class="btn btn-xs btn-primary pull-right" id="quickAddCustomerBtn" style="margin-top: -3px;">
+                            <i class="fa fa-plus"></i> New
+                        </button>
+                    </h4>
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
@@ -117,9 +122,9 @@ defined('BASEPATH') OR exit('');
                             <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
                             <p>
                                 <strong>Balance:</strong> 
-                                <span id="customerBalance" class="customer-balance">₨ 0</span>
+                                <span id="customerBalance" class="customer-balance">Rs. 0</span>
                             </p>
-                            <p><strong>Credit Limit:</strong> <span id="customerCreditLimit">₨ 0</span></p>
+                            <p><strong>Credit Limit:</strong> <span id="customerCreditLimit">Rs. 0</span></p>
                         </div>
                     </div>
                 </div>
@@ -305,6 +310,46 @@ defined('BASEPATH') OR exit('');
 </div>
 
 <?php $this->load->view('transactions/trade_in_modal'); ?>
+
+<!-- Quick Add Customer Modal -->
+<div class="modal fade" id="quickAddCustomerModal" tabindex="-1" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-user-plus"></i> Quick Add Customer</h4>
+            </div>
+            <div class="modal-body">
+                <form id="quickAddCustomerForm">
+                    <div class="form-group">
+                        <label>Name <span class="text-danger">*</span></label>
+                        <input type="text" id="quickCustName" class="form-control" required>
+                        <span class="help-block errMsg" id="quickCustNameErr"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone <span class="text-danger">*</span></label>
+                        <input type="text" id="quickCustPhone" class="form-control" required>
+                        <span class="help-block errMsg" id="quickCustPhoneErr"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Limit (Rs.)</label>
+                        <input type="number" id="quickCustCreditLimit" class="form-control" value="50000" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea id="quickCustAddress" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="saveQuickCustomerBtn">
+                    <i class="fa fa-save"></i> Save & Select
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="<?=base_url()?>public/js/pos.js"></script>
 <script src="<?=base_url('public/ext/datetimepicker/bootstrap-datepicker.min.js')?>"></script>

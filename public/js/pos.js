@@ -54,7 +54,7 @@ $(document).ready(function() {
             $('#customerName').text(customer.name);
             $('#customerPhone').text(customer.phone);
             
-            const balance = parseFloat(customer.balance || 0);
+            const balance = parseFloat(customer.balance || customer.current_balance || 0);
             const creditLimit = parseFloat(customer.credit_limit || 0);
             
             $('#customerBalance').text('Rs. ' + balance.toFixed(2))
@@ -71,6 +71,73 @@ $(document).ready(function() {
             $('#customerInfoSection').addClass('hidden');
         });
     }
+
+    // Quick Add Customer
+    $('#quickAddCustomerBtn').on('click', function() {
+        $('#quickAddCustomerForm')[0].reset();
+        $('.errMsg').text('');
+        $('#quickAddCustomerModal').modal('show');
+    });
+
+    $('#saveQuickCustomerBtn').on('click', function() {
+        $('.errMsg').text('');
+        
+        const name = $('#quickCustName').val().trim();
+        const phone = $('#quickCustPhone').val().trim();
+        const creditLimit = $('#quickCustCreditLimit').val() || 50000;
+        const address = $('#quickCustAddress').val().trim();
+
+        if (!name) {
+            $('#quickCustNameErr').text('Name is required');
+            return;
+        }
+        if (!phone) {
+            $('#quickCustPhoneErr').text('Phone is required');
+            return;
+        }
+
+        $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+        $.ajax({
+            url: baseUrl + 'index.php/customers/quickAdd',
+            type: 'POST',
+            data: {
+                name: name,
+                phone: phone,
+                credit_limit: creditLimit,
+                address: address
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 1) {
+                    showSuccess('Customer added successfully!');
+                    $('#quickAddCustomerModal').modal('hide');
+                    
+                    // Auto-select the new customer
+                    const newOption = new Option(name + ' - ' + phone, response.customer_id, true, true);
+                    $('#customerSelect').append(newOption).trigger('change');
+                    
+                    // Manually trigger select event with customer data
+                    selectedCustomerId = response.customer_id;
+                    $('#customerName').text(name);
+                    $('#customerPhone').text(phone);
+                    $('#customerBalance').text('Rs. 0.00').removeClass('negative').addClass('positive');
+                    $('#customerCreditLimit').text('Rs. ' + parseFloat(creditLimit).toFixed(2));
+                    $('#customerInfoSection').removeClass('hidden');
+                } else {
+                    if (response.name) $('#quickCustNameErr').text(response.name);
+                    if (response.phone) $('#quickCustPhoneErr').text(response.phone);
+                    showError(response.msg || 'Failed to add customer');
+                }
+            },
+            error: function() {
+                showError('Error adding customer');
+            },
+            complete: function() {
+                $('#saveQuickCustomerBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Save & Select');
+            }
+        });
+    });
 
     // ========================================
     // Unified Search (Name, Code, IMEI, Brand, Model)
@@ -142,8 +209,8 @@ $(document).ready(function() {
             
             let actionButton = '';
             if (itemType === 'serialized') {
-                actionButton = '<button class="btn btn-xs btn-primary view-imeis-btn" data-item-id="' + item.id + '" data-item-code="' + item.code + '" data-item-name="' + item.name + '">' +
-                    '<i class="fa fa-list"></i> Select IMEI</button>';
+                actionButton = '<button class="btn btn-xs btn-primary select-mobile-btn" data-item-id="' + item.id + '" data-item-code="' + item.code + '" data-item-name="' + item.name + '" data-item-price="' + item.unitPrice + '">' +
+                    '<i class="fa fa-mobile"></i> Select Unit</button>';
             } else {
                 actionButton = '<button class="btn btn-xs btn-success add-standard-btn" ' +
                     'data-item-code="' + item.code + '" ' +
@@ -190,76 +257,95 @@ $(document).ready(function() {
         $('#unifiedSearch').val('');
     });
     
-    // Handle View IMEIs for serialized items
-    $(document).on('click', '.view-imeis-btn', function() {
+    // Handle Select Mobile Unit (for serialized items)
+    $(document).on('click', '.select-mobile-btn', function() {
         const itemId = $(this).data('item-id');
         const itemCode = $(this).data('item-code');
         const itemName = $(this).data('item-name');
+        const itemPrice = $(this).data('item-price');
         
-        showImeiSelectionModal(itemId, itemCode, itemName);
+        showMobileUnitSelectionModal(itemId, itemCode, itemName, itemPrice);
     });
     
-    function showImeiSelectionModal(itemId, itemCode, itemName) {
-        // Load available IMEIs for this item
+    function showMobileUnitSelectionModal(itemId, itemCode, itemName, itemPrice) {
+        // Load available mobile units
         $.ajax({
-            url: baseUrl + 'index.php/items/getAvailableImeis',
+            url: baseUrl + 'index.php/items/getAvailableMobileUnits',
             type: 'GET',
             data: { item_id: itemId },
             dataType: 'json',
             success: function(response) {
-                if (response.status === 1 && response.imeis && response.imeis.length > 0) {
-                    let html = '<div class="modal fade" id="imeiSelectionModal" tabindex="-1">' +
-                        '<div class="modal-dialog">' +
+                if (response.status === 1 && response.units && response.units.length > 0) {
+                    let html = '<div class="modal fade" id="mobileUnitModal" tabindex="-1">' +
+                        '<div class="modal-dialog modal-lg">' +
                         '<div class="modal-content">' +
                         '<div class="modal-header">' +
                         '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                        '<h4 class="modal-title">Select IMEI - ' + itemName + '</h4>' +
+                        '<h4 class="modal-title"><i class="fa fa-mobile"></i> Select Mobile - ' + itemName + '</h4>' +
+                        '<p class="text-muted">Price: <span class="currency">Rs. ' + parseFloat(itemPrice).toFixed(2) + '</span> | Available: ' + response.units.length + ' units</p>' +
                         '</div>' +
-                        '<div class="modal-body">' +
-                        '<div class="list-group">';
+                        '<div class="modal-body" style="max-height: 500px; overflow-y: auto;">' +
+                        '<div class="row">';
                     
-                    response.imeis.forEach(function(imei) {
-                        const colorInfo = imei.color ? 'Color: ' + imei.color : '';
-                        const costInfo = imei.cost_price ? ' | Cost: Rs. ' + parseFloat(imei.cost_price).toFixed(2) : '';
+                    response.units.forEach(function(unit, index) {
+                        const imeiCount = unit.imeis.length;
+                        const imeiDisplay = unit.imeis.map(function(imei) {
+                            return '<code>' + imei + '</code>';
+                        }).join('<br>');
                         
-                        html += '<a href="#" class="list-group-item select-imei-item" ' +
-                            'data-imei="' + imei.imei_number + '" ' +
-                            'data-item-code="' + itemCode + '">' +
-                            '<h4 class="list-group-item-heading">' +
-                            '<i class="fa fa-mobile"></i> ' + imei.imei_number +
-                            '</h4>' +
-                            '<p class="list-group-item-text">' +
-                            colorInfo + costInfo +
-                            '</p>' +
-                            '</a>';
+                        const simType = imeiCount > 1 ? '<span class="label label-success">Dual SIM</span>' : '<span class="label label-default">Single SIM</span>';
+                        const colorBadge = unit.color ? '<span class="label label-primary">' + unit.color + '</span>' : '<span class="label label-default">No Color</span>';
+                        const costInfo = unit.cost_price ? '<br><small><strong>Cost:</strong> Rs. ' + parseFloat(unit.cost_price).toFixed(2) + '</small>' : '';
+                        
+                        html += '<div class="col-sm-6" style="margin-bottom: 15px;">' +
+                            '<div class="panel panel-default" style="cursor: pointer; transition: all 0.2s;" ' +
+                            'onmouseover="this.style.boxShadow=\'0 4px 8px rgba(0,0,0,0.2)\'" ' +
+                            'onmouseout="this.style.boxShadow=\'none\'">' +
+                            '<div class="panel-body select-unit-item" ' +
+                            'data-unit-index="' + index + '" ' +
+                            'data-item-code="' + itemCode + '" ' +
+                            'data-imeis=\'' + JSON.stringify(unit.imeis) + '\'>' +
+                            '<h4><i class="fa fa-mobile"></i> Unit #' + (index + 1) + ' ' + colorBadge + ' ' + simType + '</h4>' +
+                            '<p><strong>IMEI' + (imeiCount > 1 ? 's' : '') + ':</strong><br>' + imeiDisplay + costInfo + '</p>' +
+                            '<button class="btn btn-success btn-sm btn-block">' +
+                            '<i class="fa fa-shopping-cart"></i> Add to Cart' +
+                            '</button>' +
+                            '</div></div></div>';
                     });
                     
-                    html += '</div></div></div></div></div>';
+                    html += '</div></div>' +
+                        '<div class="modal-footer">' +
+                        '<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                        '</div>' +
+                        '</div></div></div>';
                     
                     // Remove existing modal if any
-                    $('#imeiSelectionModal').remove();
+                    $('#mobileUnitModal').remove();
                     
                     // Add and show modal
                     $('body').append(html);
-                    $('#imeiSelectionModal').modal('show');
+                    $('#mobileUnitModal').modal('show');
                 } else {
-                    showError('No available IMEIs for this item');
+                    showError('No available units for this item');
                 }
             },
             error: function() {
-                showError('Error loading IMEIs');
+                showError('Error loading mobile units');
             }
         });
     }
     
-    // Handle IMEI selection
-    $(document).on('click', '.select-imei-item', function(e) {
+    // Handle Mobile Unit selection
+    $(document).on('click', '.select-unit-item', function(e) {
         e.preventDefault();
-        const imei = $(this).data('imei');
         const itemCode = $(this).data('item-code');
+        const imeis = JSON.parse($(this).attr('data-imeis'));
         
-        $('#imeiSelectionModal').modal('hide');
-        addItemToCart(itemCode, imei);
+        $('#mobileUnitModal').modal('hide');
+        
+        // Add to cart with all IMEIs
+        addItemToCart(itemCode, imeis.join(','));
+        
         $('#unifiedSearch').val('').focus();
         $('#searchResults').addClass('hidden');
     });
@@ -287,7 +373,7 @@ $(document).ready(function() {
     // ========================================
     function addItemToCart(itemCode, imei = null, qty = 1) {
         $.ajax({
-            url: baseUrl + 'transactions/addToCart',
+            url: baseUrl + 'index.php/transactions/addToCart',
             type: 'POST',
             data: { 
                 itemCode: itemCode,
@@ -314,7 +400,7 @@ $(document).ready(function() {
         const vat = parseFloat($('#vatPercent').val()) || 0;
 
         $.ajax({
-            url: baseUrl + 'transactions/getCart',
+            url: baseUrl + 'index.php/transactions/getCart',
             type: 'POST',
             data: { 
                 discount: discount,
@@ -330,6 +416,26 @@ $(document).ready(function() {
                 console.error('Error refreshing cart');
             }
         });
+    }
+
+    function getCartItems() {
+        // Get cart items from server
+        let cartItems = [];
+        
+        $.ajax({
+            url: baseUrl + 'index.php/transactions/getCart',
+            type: 'GET',
+            dataType: 'json',
+            async: false, // Synchronous call to get cart items
+            success: function(response) {
+                if (response.status === 1 && response.cartItems) {
+                    // Convert cart object to array
+                    cartItems = Object.values(response.cartItems);
+                }
+            }
+        });
+        
+        return cartItems;
     }
 
     function displayCart(cartItems, totals) {
@@ -611,6 +717,13 @@ $(document).ready(function() {
     // Complete Transaction
     // ========================================
     $('#completeTransactionBtn').on('click', function() {
+        // Check if cart has items
+        const cartItems = getCartItems();
+        if (!cartItems || cartItems.length === 0) {
+            showError('Cart is empty. Please add items first.');
+            return;
+        }
+
         const paymentMethod = $('#paymentMethod').val();
         
         if (!paymentMethod) {
@@ -620,7 +733,7 @@ $(document).ready(function() {
 
         const discountPercent = parseFloat($('#discountPercent').val()) || 0;
         const vatPercent = parseFloat($('#vatPercent').val()) || 0;
-        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('₨ ', '').replace(',', '')) || 0;
+        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
 
         let amountTendered = 0;
         let partialAmount = 0;
@@ -668,6 +781,7 @@ $(document).ready(function() {
 
         // Prepare transaction data
         const transactionData = {
+            cart_items: JSON.stringify(cartItems),
             payment_method: paymentMethod,
             discount_percent: discountPercent,
             vat_percent: vatPercent,
@@ -679,7 +793,7 @@ $(document).ready(function() {
 
         // Process transaction
         $.ajax({
-            url: baseUrl + 'transactions/processTransaction',
+            url: baseUrl + 'index.php/transactions/processTransaction',
             type: 'POST',
             data: transactionData,
             dataType: 'json',
@@ -688,7 +802,7 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.status === 1) {
-                    showSuccess('Transaction completed successfully! Ref: ' + response.ref);
+                    showSuccess('Transaction completed! Ref: ' + response.ref);
                     
                     // Reset form
                     resetPOS();
@@ -696,8 +810,11 @@ $(document).ready(function() {
                     // Reload transaction list
                     loadTransactionList();
                     
-                    // TODO: Print receipt
-                    alert('Transaction Ref: ' + response.ref + '\nTotal: ₨' + response.grand_total + '\nProfit: ₨' + response.profit);
+                    // Show receipt option
+                    if (confirm('Transaction completed successfully!\n\nRef: ' + response.ref + '\nTotal: Rs. ' + response.grand_total + '\n\nView receipt?')) {
+                        // TODO: Open receipt modal or print
+                        window.open(baseUrl + 'index.php/transactions/receipt/' + response.ref, '_blank');
+                    }
                 } else {
                     showError(response.msg);
                 }
@@ -798,13 +915,37 @@ $(document).ready(function() {
     // Helper Functions
     // ========================================
     function showError(message) {
-        // Using simple alert for now, can be replaced with better notification system
-        alert('Error: ' + message);
+        // Create toast notification
+        const toast = $('<div class="alert alert-danger alert-dismissible" style="position: fixed; top: 70px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
+            '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+            '<strong><i class="fa fa-exclamation-circle"></i> Error!</strong> ' + message +
+            '</div>');
+        
+        $('body').append(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(function() {
+            toast.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 5000);
     }
 
     function showSuccess(message) {
-        // Using simple alert for now, can be replaced with better notification system
-        console.log('Success: ' + message);
+        // Create toast notification
+        const toast = $('<div class="alert alert-success alert-dismissible" style="position: fixed; top: 70px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
+            '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+            '<strong><i class="fa fa-check-circle"></i> Success!</strong> ' + message +
+            '</div>');
+        
+        $('body').append(toast);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(function() {
+            toast.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 3000);
     }
 
     // Auto-refresh cart on page load

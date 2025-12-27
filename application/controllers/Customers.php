@@ -342,4 +342,45 @@ class Customers extends CI_Controller {
 
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
     }
+
+    /**
+     * Quick add customer (for POS)
+     */
+    public function quickAdd() {
+        $this->genlib->ajaxOnly();
+
+        $this->load->library('form_validation');
+        $this->form_validation->set_error_delimiters('', '');
+        
+        $this->form_validation->set_rules('name', 'Name', ['required', 'trim', 'max_length[100]']);
+        $this->form_validation->set_rules('phone', 'Phone', ['required', 'trim', 'max_length[20]', 'is_unique[customers.phone]']);
+        $this->form_validation->set_rules('credit_limit', 'Credit limit', ['trim', 'numeric', 'greater_than_equal_to[0]']);
+
+        if ($this->form_validation->run() !== FALSE) {
+            $customerData = [
+                'name' => $this->input->post('name', TRUE),
+                'phone' => $this->input->post('phone', TRUE),
+                'address' => $this->input->post('address', TRUE),
+                'credit_limit' => $this->input->post('credit_limit', TRUE) ?: 50000,
+                'current_balance' => 0
+            ];
+
+            $customerId = $this->customer->add($customerData);
+
+            if ($customerId) {
+                $json['status'] = 1;
+                $json['msg'] = "Customer added successfully";
+                $json['customer_id'] = $customerId;
+            } else {
+                $json['status'] = 0;
+                $json['msg'] = "Failed to add customer";
+            }
+        } else {
+            $json = $this->form_validation->error_array();
+            $json['status'] = 0;
+            $json['msg'] = "Validation failed";
+        }
+
+        $this->output->set_content_type('application/json')->set_output(json_encode($json));
+    }
 }
