@@ -1,0 +1,18 @@
+# Block access to test files in production
+# Remove or comment out these lines if you need to access test files
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Allow access only from localhost
+    RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1
+    RewriteCond %{REMOTE_ADDR} !^::1
+    RewriteCond %{REMOTE_HOST} !^localhost
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Alternative: Completely block access (uncomment to use)
+# Order Deny,Allow
+# Deny from all
+# Allow from 127.0.0.1
+# Allow from ::1
