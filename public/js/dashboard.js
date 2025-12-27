@@ -53,9 +53,14 @@ function getEarnings(year){
     $.ajax({
         type: 'GET',
         url: appRoot+"index.php/dashboard/earningsGraph/"+yearToFetch,
-        dataType: "html"
+        dataType: "json"
     }).done(function(data){
-        var response = jQuery.parseJSON(data);
+        if (!data || typeof data !== 'object') {
+            console.error('Invalid earnings data received');
+            return;
+        }
+        
+        var response = data;
 
         var barChartData = {
           labels : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"],
@@ -84,8 +89,10 @@ function getEarnings(year){
 
         //remove the loading info
         $("#yearAccountLoading").html("");
-    }).fail(function(){
-        console.log('req failed');
+    }).fail(function(xhr, status, error){
+        console.error('Earnings request failed:', status, error);
+        console.log('Response:', xhr.responseText);
+    });
     });
 }
 
@@ -108,9 +115,14 @@ function loadPaymentMethodChart(year){
     $.ajax({
         type: 'GET',
         url: appRoot+"index.php/dashboard/paymentmethodchart/"+yearToGet,
-        dataType: "html",
+        dataType: "json",
         success: function(data) {
-            var response = jQuery.parseJSON(data);
+            if (!data || typeof data !== 'object') {
+                console.error('Invalid payment method data received');
+                return;
+            }
+            
+            var response = data;
             var cash = response.cash;
             var pos = response.pos;
             var cashAndPos = response.cashAndPos;
@@ -162,6 +174,10 @@ function loadPaymentMethodChart(year){
             
             //append the year we are showing
             $("#paymentMethodYear").html(" - "+response.year);
+        },
+        error: function(xhr, status, error) {
+            console.error('Payment method chart failed:', status, error);
+            console.log('Response:', xhr.responseText);
         }
     });
 }
