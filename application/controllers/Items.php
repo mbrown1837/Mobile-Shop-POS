@@ -507,5 +507,55 @@ class Items extends CI_Controller
 
     $this->output->set_content_type('application/json')->set_output(json_encode($json));
   }
-}
 
+  /**
+   * Search items for POS (Name, Code, IMEI, Brand, Model)
+   */
+  public function searchForPos() {
+    $this->genlib->ajaxOnly();
+    
+    $searchTerm = $this->input->get('search', TRUE);
+    
+    if (empty($searchTerm)) {
+      $json['status'] = 0;
+      $json['items'] = [];
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    $items = $this->item->itemsearch($searchTerm);
+
+    $json['status'] = 1;
+    $json['items'] = $items ?: [];
+
+    $this->output->set_content_type('application/json')->set_output(json_encode($json));
+  }
+
+  /**
+   * Get available IMEIs for an item
+   */
+  public function getAvailableImeis() {
+    $this->genlib->ajaxOnly();
+    
+    $itemId = $this->input->get('item_id', TRUE);
+    
+    if (empty($itemId)) {
+      $json['status'] = 0;
+      $json['msg'] = "Item ID is required";
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    $imeis = $this->item->getAvailableSerials($itemId);
+
+    if (!$imeis || count($imeis) == 0) {
+      $json['status'] = 0;
+      $json['msg'] = "No available IMEIs";
+    } else {
+      $json['status'] = 1;
+      $json['imeis'] = $imeis;
+    }
+
+    $this->output->set_content_type('application/json')->set_output(json_encode($json));
+  }
+}

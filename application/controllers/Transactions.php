@@ -1212,9 +1212,9 @@ class Transactions extends CI_Controller
       $changeDue = $amountTendered - $grandTotal;
     }
 
-    // Check customer credit limit if applicable
+    // Load customer info if customer ID provided
     $customer = null;
-    if ($creditAmount > 0 && !empty($customerId)) {
+    if (!empty($customerId)) {
       $this->load->model('customer');
       $customer = $this->customer->getById($customerId);
       
@@ -1224,18 +1224,17 @@ class Transactions extends CI_Controller
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
         return;
       }
+    }
 
+    // Check customer credit limit if applicable
+    if ($creditAmount > 0 && !empty($customerId)) {
       $newBalance = $customer->current_balance + $creditAmount;
       if ($newBalance > $customer->credit_limit) {
         $json['status'] = 0;
-        $json['msg'] = "Credit limit exceeded. Available credit: " . ($customer->credit_limit - $customer->current_balance);
+        $json['msg'] = "Credit limit exceeded. Available credit: Rs. " . number_format($customer->credit_limit - $customer->current_balance, 2);
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
         return;
       }
-    } elseif (!empty($customerId)) {
-      // Load customer info even if no credit
-      $this->load->model('customer');
-      $customer = $this->customer->getById($customerId);
     }
 
     // Generate transaction reference

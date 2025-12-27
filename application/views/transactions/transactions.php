@@ -22,25 +22,42 @@ defined('BASEPATH') OR exit('');
                     <h4 class="panel-title"><i class="fa fa-search"></i> Search Items</h4>
                 </div>
                 <div class="panel-body">
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label>IMEI / Serial Number</label>
-                                <input type="text" id="imeiSearch" class="form-control" placeholder="Scan or enter 15-digit IMEI" maxlength="15">
-                                <span class="help-block text-muted">Press Enter to search</span>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label>Item Code / Barcode</label>
-                                <input type="text" id="itemCodeSearch" class="form-control" placeholder="Scan or enter item code">
-                                <span class="help-block text-muted">Press Enter to search</span>
-                            </div>
+                    <div class="form-group">
+                        <label><i class="fa fa-search"></i> Search by Name, Code, IMEI, Brand, or Model</label>
+                        <input type="text" id="unifiedSearch" class="form-control input-lg" 
+                               placeholder="Search by Name, Code, IMEI, Brand, Model..." 
+                               autofocus>
+                        <span class="help-block text-muted">
+                            <i class="fa fa-info-circle"></i> Type to search across all fields. Results will appear below.
+                        </span>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="searchResults" class="hidden">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover table-bordered">
+                                <thead>
+                                    <tr class="active">
+                                        <th>Item</th>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Price</th>
+                                        <th>Available</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="searchResultsBody">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
-                    <!-- Standard Item Quantity (shown when item code is found) -->
+                    <!-- Standard Item Quantity (shown when item is selected) -->
                     <div id="standardItemSection" class="hidden">
+                        <div class="alert alert-success">
+                            <strong id="foundItemName"></strong> - <span id="foundItemPrice" class="currency"></span>
+                            <br><small>Available: <span id="foundItemQty"></span> | Code: <span id="foundItemCode"></span></small>
+                        </div>
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
@@ -51,7 +68,7 @@ defined('BASEPATH') OR exit('');
                             <div class="col-sm-6">
                                 <div class="form-group">
                                     <label>&nbsp;</label><br>
-                                    <button type="button" id="addStandardItemBtn" class="btn btn-success">
+                                    <button type="button" id="addStandardItemBtn" class="btn btn-success btn-block">
                                         <i class="fa fa-plus"></i> Add to Cart
                                     </button>
                                 </div>

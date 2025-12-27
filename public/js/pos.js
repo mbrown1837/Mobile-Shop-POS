@@ -73,94 +73,196 @@ $(document).ready(function() {
     }
 
     // ========================================
-    // IMEI Search
+    // Unified Search (Name, Code, IMEI, Brand, Model)
     // ========================================
-    $('#imeiSearch').on('keypress', function(e) {
-        if (e.which === 13) { // Enter key
+    let searchTimeout;
+    
+    $('#unifiedSearch').on('input', function() {
+        clearTimeout(searchTimeout);
+        const searchValue = $(this).val().trim();
+        
+        if (searchValue.length < 2) {
+            $('#searchResults').addClass('hidden');
+            $('#standardItemSection').addClass('hidden');
+            return;
+        }
+        
+        searchTimeout = setTimeout(function() {
+            performUnifiedSearch(searchValue);
+        }, 500); // Wait 500ms after user stops typing
+    });
+    
+    // Also search on Enter key
+    $('#unifiedSearch').on('keypress', function(e) {
+        if (e.which === 13) {
             e.preventDefault();
-            const imei = $(this).val().trim();
-            
-            if (imei.length !== 15) {
-                showError('IMEI must be exactly 15 digits');
-                return;
+            clearTimeout(searchTimeout);
+            const searchValue = $(this).val().trim();
+            if (searchValue.length >= 2) {
+                performUnifiedSearch(searchValue);
             }
-
-            searchByImei(imei);
         }
     });
-
-    function searchByImei(imei) {
+    
+    function performUnifiedSearch(searchTerm) {
         $.ajax({
-            url: baseUrl + 'index.php/transactions/searchByImei',
+            url: baseUrl + 'index.php/items/searchForPos',
             type: 'GET',
-            data: { imei: imei },
+            data: { search: searchTerm },
             dataType: 'json',
             beforeSend: function() {
-                $('#imeiSearch').prop('disabled', true);
+                $('#searchResultsBody').html('<tr><td colspan="6" class="text-center"><i class="fa fa-spinner fa-spin"></i> Searching...</td></tr>');
+                $('#searchResults').removeClass('hidden');
             },
             success: function(response) {
-                if (response.status === 1) {
-                    // Add item to cart automatically
-                    addItemToCart(response.item.code, imei);
-                    $('#imeiSearch').val(''); // Clear search field
+                if (response.status === 1 && response.items && response.items.length > 0) {
+                    displaySearchResults(response.items);
                 } else {
-                    showError(response.msg);
+                    $('#searchResultsBody').html('<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>');
                 }
             },
             error: function() {
-                showError('Error searching for IMEI');
-            },
-            complete: function() {
-                $('#imeiSearch').prop('disabled', false).focus();
+                $('#searchResultsBody').html('<tr><td colspan="6" class="text-center text-danger">Error searching items</td></tr>');
             }
         });
     }
-
-    // ========================================
-    // Item Code Search
-    // ========================================
-    $('#itemCodeSearch').on('keypress', function(e) {
-        if (e.which === 13) { // Enter key
-            e.preventDefault();
-            const itemCode = $(this).val().trim();
+    
+    function displaySearchResults(items) {
+        let html = '';
+        
+        items.forEach(function(item) {
+            const itemType = item.item_type || 'standard';
+            const available = item.available_qty || item.quantity || 0;
+            const typeLabel = itemType === 'serialized' 
+                ? '<span class="label label-info"><i class="fa fa-mobile"></i> Serial</span>' 
+                : '<span class="label label-default"><i class="fa fa-cube"></i> Std</span>';
             
-            if (!itemCode) {
-                showError('Please enter an item code');
-                return;
+            const brandInfo = item.brand ? '<br><small class="text-muted">' + item.brand + (item.model ? ' ' + item.model : '') + '</small>' : '';
+            const badgeClass = available <= 10 ? 'badge-danger' : 'badge-success';
+            
+            let actionButton = '';
+            if (itemType === 'serialized') {
+                actionButton = '<button class="btn btn-xs btn-primary view-imeis-btn" data-item-id="' + item.id + '" data-item-code="' + item.code + '" data-item-name="' + item.name + '">' +
+                    '<i class="fa fa-list"></i> Select IMEI</button>';
+            } else {
+                actionButton = '<button class="btn btn-xs btn-success add-standard-btn" ' +
+                    'data-item-code="' + item.code + '" ' +
+                    'data-item-name="' + item.name + '" ' +
+                    'data-item-price="' + item.unitPrice + '" ' +
+                    'data-item-qty="' + available + '">' +
+                    '<i class="fa fa-plus"></i> Add</button>';
             }
-
-            searchByItemCode(itemCode);
-        }
+            
+            html += '<tr>' +
+                '<td><strong>' + item.name + '</strong>' + brandInfo + '</td>' +
+                '<td><code>' + item.code + '</code></td>' +
+                '<td>' + typeLabel + '</td>' +
+                '<td><span class="currency">Rs. ' + parseFloat(item.unitPrice).toFixed(2) + '</span></td>' +
+                '<td><span class="badge ' + badgeClass + '">' + available + '</span></td>' +
+                '<td>' + actionButton + '</td>' +
+                '</tr>';
+        });
+        
+        $('#searchResultsBody').html(html);
+    }
+    
+    // Handle Add Standard Item from search results
+    $(document).on('click', '.add-standard-btn', function() {
+        const itemCode = $(this).data('item-code');
+        const itemName = $(this).data('item-name');
+        const itemPrice = $(this).data('item-price');
+        const itemQty = $(this).data('item-qty');
+        
+        currentStandardItem = {
+            code: itemCode,
+            name: itemName,
+            unitPrice: itemPrice,
+            quantity: itemQty
+        };
+        
+        $('#foundItemName').text(itemName);
+        $('#foundItemCode').text(itemCode);
+        $('#foundItemPrice').text('Rs. ' + parseFloat(itemPrice).toFixed(2));
+        $('#foundItemQty').text(itemQty);
+        $('#standardItemSection').removeClass('hidden');
+        $('#standardItemQty').val(1).focus();
+        $('#searchResults').addClass('hidden');
+        $('#unifiedSearch').val('');
     });
-
-    function searchByItemCode(itemCode) {
+    
+    // Handle View IMEIs for serialized items
+    $(document).on('click', '.view-imeis-btn', function() {
+        const itemId = $(this).data('item-id');
+        const itemCode = $(this).data('item-code');
+        const itemName = $(this).data('item-name');
+        
+        showImeiSelectionModal(itemId, itemCode, itemName);
+    });
+    
+    function showImeiSelectionModal(itemId, itemCode, itemName) {
+        // Load available IMEIs for this item
         $.ajax({
-            url: baseUrl + 'index.php/items/getItemInfo',
+            url: baseUrl + 'index.php/items/getAvailableImeis',
             type: 'GET',
-            data: { code: itemCode },
+            data: { item_id: itemId },
             dataType: 'json',
             success: function(response) {
-                if (response.status === 1) {
-                    const item = response.item;
+                if (response.status === 1 && response.imeis && response.imeis.length > 0) {
+                    let html = '<div class="modal fade" id="imeiSelectionModal" tabindex="-1">' +
+                        '<div class="modal-dialog">' +
+                        '<div class="modal-content">' +
+                        '<div class="modal-header">' +
+                        '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+                        '<h4 class="modal-title">Select IMEI - ' + itemName + '</h4>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                        '<div class="list-group">';
                     
-                    if (item.item_type === 'serialized') {
-                        showError('This is a serialized item. Please scan IMEI instead.');
-                        $('#itemCodeSearch').val('');
-                    } else {
-                        // Show quantity input for standard items
-                        currentStandardItem = item;
-                        $('#standardItemSection').removeClass('hidden');
-                        $('#standardItemQty').val(1).focus();
-                    }
+                    response.imeis.forEach(function(imei) {
+                        const colorInfo = imei.color ? 'Color: ' + imei.color : '';
+                        const costInfo = imei.cost_price ? ' | Cost: Rs. ' + parseFloat(imei.cost_price).toFixed(2) : '';
+                        
+                        html += '<a href="#" class="list-group-item select-imei-item" ' +
+                            'data-imei="' + imei.imei_number + '" ' +
+                            'data-item-code="' + itemCode + '">' +
+                            '<h4 class="list-group-item-heading">' +
+                            '<i class="fa fa-mobile"></i> ' + imei.imei_number +
+                            '</h4>' +
+                            '<p class="list-group-item-text">' +
+                            colorInfo + costInfo +
+                            '</p>' +
+                            '</a>';
+                    });
+                    
+                    html += '</div></div></div></div></div>';
+                    
+                    // Remove existing modal if any
+                    $('#imeiSelectionModal').remove();
+                    
+                    // Add and show modal
+                    $('body').append(html);
+                    $('#imeiSelectionModal').modal('show');
                 } else {
-                    showError(response.msg || 'Item not found');
+                    showError('No available IMEIs for this item');
                 }
             },
             error: function() {
-                showError('Error searching for item');
+                showError('Error loading IMEIs');
             }
         });
     }
+    
+    // Handle IMEI selection
+    $(document).on('click', '.select-imei-item', function(e) {
+        e.preventDefault();
+        const imei = $(this).data('imei');
+        const itemCode = $(this).data('item-code');
+        
+        $('#imeiSelectionModal').modal('hide');
+        addItemToCart(itemCode, imei);
+        $('#unifiedSearch').val('').focus();
+        $('#searchResults').addClass('hidden');
+    });
 
     // Add standard item to cart
     $('#addStandardItemBtn').on('click', function() {
