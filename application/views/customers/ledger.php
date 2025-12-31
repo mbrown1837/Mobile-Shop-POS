@@ -127,7 +127,7 @@ defined('BASEPATH') OR exit('');
                                                 <?php endif; ?>
                                             </td>
                                             <td>
-                                                <?php if ($entry->transaction_ref): ?>
+                                                <?php if (isset($entry->transaction_ref) && $entry->transaction_ref): ?>
                                                     <a href="javascript:void(0)" onclick="viewTransaction('<?=$entry->transaction_ref?>')">
                                                         <?=$entry->transaction_ref?>
                                                     </a>
@@ -140,8 +140,8 @@ defined('BASEPATH') OR exit('');
                                                     <?=$entry->transaction_type === 'payment' ? '-' : '+'?>₨<?=number_format($entry->amount, 2)?>
                                                 </span>
                                             </td>
-                                            <td>₨<?=number_format($entry->balance_after, 2)?></td>
-                                            <td><?=htmlspecialchars($entry->notes)?></td>
+                                            <td>₨<?=number_format(isset($entry->balance_after) ? $entry->balance_after : 0, 2)?></td>
+                                            <td><?=htmlspecialchars($entry->notes ?? '')?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>

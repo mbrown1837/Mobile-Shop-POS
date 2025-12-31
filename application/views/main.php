@@ -41,12 +41,6 @@ defined('BASEPATH') or exit('');
   <!-- custom CSS -->
   <link rel="stylesheet" href="<?= base_url() ?>public/css/main.css">
 
-  <!-- JavaScript Configuration -->
-  <script>
-    var baseUrl = "<?= base_url() ?>";
-    var appRoot = "<?= base_url() ?>";
-  </script>
-
   <!-- custom JS -->
   <script src="<?= base_url() ?>public/js/main.js"></script>
 </head>
@@ -62,8 +56,9 @@ defined('BASEPATH') or exit('');
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="<?= base_url() ?>" style="margin-top:-15px">
-          <img src="<?= base_url() ?>public/images/logo_black.png" alt="logo" class="img-responsive" width="73px">
+        <a class="navbar-brand" href="<?= base_url() ?>" style="padding: 10px 15px;">
+          <i class="fa fa-mobile" style="font-size: 24px; margin-right: 8px;"></i>
+          <strong style="font-size: 18px;"><?= getenv('SHOP_NAME') ?: 'Mobile Shop POS' ?></strong>
         </a>
       </div>
 

@@ -46,13 +46,7 @@ class Item extends CI_Model{
     public function add($itemName, $itemQuantity, $itemPrice, $itemDescription, $itemCode){
         $data = ['name'=>$itemName, 'quantity'=>$itemQuantity, 'unitPrice'=>$itemPrice, 'description'=>$itemDescription, 'code'=>$itemCode];
                 
-        //set the datetime based on the db driver in use
-        $this->db->platform() == "sqlite3" 
-                ? 
-        $this->db->set('dateAdded', "datetime('now')", FALSE) 
-                : 
-        $this->db->set('dateAdded', "NOW()", FALSE);
-        
+        // created_at and updated_at are automatically set by database DEFAULT CURRENT_TIMESTAMP
         $this->db->insert('items', $data);
         
         if($this->db->insert_id()){
@@ -291,7 +285,7 @@ class Item extends CI_Model{
             $insert_data['category'] = $data['category'];
         }
         
-        $this->db->platform() == "sqlite3" ? $this->db->set('dateAdded', "datetime('now')", FALSE) : $this->db->set('dateAdded', "NOW()", FALSE);
+        // created_at and updated_at are automatically set by database DEFAULT CURRENT_TIMESTAMP
         $this->db->insert('items', $insert_data);
         return $this->db->insert_id() ?: FALSE;
     }

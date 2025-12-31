@@ -6,11 +6,45 @@
 // Use appRoot from main.js
 var baseUrl = appRoot;
 
+// ========================================
+// Notification Helper Function
+// ========================================
+function showNotification(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : (type === 'info' ? 'alert-info' : 'alert-danger');
+    const icon = type === 'success' ? 'fa-check-circle' : (type === 'info' ? 'fa-info-circle' : 'fa-exclamation-circle');
+    
+    const notification = $('<div class="alert ' + alertClass + ' alert-dismissible fade in" style="position:fixed;top:70px;right:20px;z-index:9999;min-width:300px;">' +
+        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+        '<i class="fa ' + icon + '"></i> ' + message +
+        '</div>');
+    
+    $('body').append(notification);
+    
+    setTimeout(function() {
+        notification.fadeOut(function() {
+            $(this).remove();
+        });
+    }, 3000);
+}
+
 $(document).ready(function() {
     // Load customers on page load
     if ($('#customerListTable').length) {
         loadCustomers();
     }
+
+    // ========================================
+    // Credit Enable/Disable Toggle
+    // ========================================
+    $('#creditEnabled').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#creditLimitGroup').show(); // Show immediately without animation
+            $('#creditLimit').prop('required', true).val(10000).focus();
+        } else {
+            $('#creditLimitGroup').hide();
+            $('#creditLimit').prop('required', false).val(0);
+        }
+    });
 
     // ========================================
     // Load Customers
@@ -68,12 +102,13 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.status === 1) {
-                    alert('Success: ' + response.msg);
+                    showNotification('success', response.msg);
                     $('#addCustomerModal').modal('hide');
                     $('#addCustomerForm')[0].reset();
+                    $('#creditLimitGroup').hide();
                     loadCustomers();
                 } else {
-                    alert('Error: ' + response.msg);
+                    showNotification('error', response.msg);
                     // Display field errors
                     if (response.customerName) $('#customerNameErr').text(response.customerName);
                     if (response.customerPhone) $('#customerPhoneErr').text(response.customerPhone);
@@ -82,7 +117,7 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                alert('Error: Failed to add customer');
+                showNotification('error', 'Failed to add customer. Please try again.');
             },
             complete: function() {
                 $('#saveCustomerBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Customer');
@@ -112,11 +147,11 @@ $(document).ready(function() {
                     $('#editCustomerStatus').val(customer.status);
                     $('#editCustomerModal').modal('show');
                 } else {
-                    alert('Error: ' + response.msg);
+                    showNotification('error', response.msg);
                 }
             },
             error: function() {
-                alert('Error: Failed to load customer details');
+                showNotification('error', 'Failed to load customer details');
             }
         });
     };
@@ -134,15 +169,15 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.status === 1) {
-                    alert('Success: ' + response.msg);
+                    showNotification('success', response.msg);
                     $('#editCustomerModal').modal('hide');
                     loadCustomers();
                 } else {
-                    alert('Error: ' + response.msg);
+                    showNotification('error', response.msg);
                 }
             },
             error: function() {
-                alert('Error: Failed to update customer');
+                showNotification('error', 'Failed to update customer');
             },
             complete: function() {
                 $('#updateCustomerBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Update Customer');
@@ -165,14 +200,14 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.status === 1) {
-                    alert('Success: ' + response.msg);
+                    showNotification('success', response.msg);
                     loadCustomers();
                 } else {
-                    alert('Error: ' + response.msg);
+                    showNotification('error', response.msg);
                 }
             },
             error: function() {
-                alert('Error: Failed to delete customer');
+                showNotification('error', 'Failed to delete customer');
             }
         });
     };
@@ -203,7 +238,7 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.status === 1) {
-                    alert('Success: ' + response.msg);
+                    showNotification('success', response.msg);
                     $('#recordPaymentModal').modal('hide');
                     
                     // Reload page if on ledger view, otherwise reload customer list
@@ -213,12 +248,12 @@ $(document).ready(function() {
                         loadCustomers();
                     }
                 } else {
-                    alert('Error: ' + response.msg);
+                    showNotification('error', response.msg);
                     if (response.amount) $('#paymentAmountErr').text(response.amount);
                 }
             },
             error: function() {
-                alert('Error: Failed to record payment');
+                showNotification('error', 'Failed to record payment');
             },
             complete: function() {
                 $('#savePaymentBtn').prop('disabled', false).html('<i class="fa fa-check"></i> Record Payment');
@@ -238,7 +273,7 @@ $(document).ready(function() {
     // ========================================
     window.viewTransaction = function(ref) {
         // TODO: Implement transaction view modal
-        alert('Transaction Ref: ' + ref);
+        showNotification('info', 'Transaction Ref: ' + ref);
     };
 
     // ========================================

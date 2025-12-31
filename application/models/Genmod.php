@@ -94,7 +94,7 @@ class Genmod extends CI_Model{
      * @return boolean
      */
     public function addevent($event, $eventRowIdOrRef, $eventDesc, $eventTable, $staffId){
-        $data = ['event'=>$event, 'eventRowIdOrRef'=>$eventRowIdOrRef, 'eventDesc'=>$eventDesc, 'eventTable'=>$eventTable, 'staffInCharge'=>$staffId];
+        $data = ['event'=>$event, 'eventRowIdOrRef'=>$eventRowIdOrRef, 'eventDesc'=>$eventDesc, 'eventTable'=>$eventTable, 'staffId'=>$staffId];
         
         $this->db->insert('eventlog', $data);
         
@@ -226,15 +226,12 @@ class Genmod extends CI_Model{
      */
     public function getPaymentMethods($year){
 		if($this->db->platform() == "sqlite3"){
-			$q = "SELECT modeOfPayment FROM transactions WHERE strftime('%Y', transDate) GROUP BY ref";
-			
+			$q = "SELECT modeOfPayment FROM transactions WHERE strftime('%Y', transDate) = '$year'";
 			$run_q = $this->db->query($q);
 		}
-		
 		else{
-			$this->db->select('GROUP_CONCAT(DISTINCT modeOfPayment) as modeOfPayment');
+			$this->db->select('modeOfPayment');
 			$year ? $this->db->where('YEAR(transDate)', $year) : "";
-			$this->db->group_by('ref');
 			$run_q = $this->db->get('transactions');
 		}
         

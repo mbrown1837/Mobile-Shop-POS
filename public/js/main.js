@@ -1,7 +1,35 @@
 'use strict';
 
+/**
+ * Set the application root URL based on environment
+ * @param {type} devFolderName
+ * @param {type} prodFolderName
+ * @returns {String}
+ */
+function setAppRoot(devFolderName, prodFolderName){
+    var hostname = window.location.hostname;
+
+    //attach trailing slash to both foldernames
+    var devFolder = devFolderName ? devFolderName+"/" : "";
+    var prodFolder = prodFolderName ? prodFolderName+"/" : "";
+    
+    var baseURL = "";
+    
+    if(hostname.search("localhost") !== -1 || (hostname.search("192.168.") !== -1)  || (hostname.search("127.0.0.") !== -1)){
+        baseURL = window.location.origin+"/"+devFolder;
+    }
+    else{
+        baseURL = window.location.origin+"/"+prodFolder;
+    }
+    
+    return baseURL;
+}
+
 var appRoot = setAppRoot("mobile-shop-pos", "mobile-shop-pos");
 var spinnerClass = 'fa fa-spinner faa-spin animated';
+
+// Debug: Log appRoot to console
+console.log('appRoot:', appRoot);
 
 $(document).ready(function(){
     $('[data-toggle="tooltip"]').tooltip();
@@ -471,10 +499,15 @@ function drm_(){
 function totalEarnedToday(){
     $.ajax({
         method:"POST",
-        url: appRoot+"index.php/misc/totalearnedtoday"
+        url: appRoot+"misc/totalearnedtoday",
+        dataType: "json"
     }).done(function(returnedData){
         //paste the returnedData on the navbar to show total amount earned on current day
-        $("#totalEarnedToday").html(returnedData.totalEarnedToday);
+        if(returnedData && returnedData.totalEarnedToday !== undefined) {
+            $("#totalEarnedToday").html(returnedData.totalEarnedToday);
+        }
+    }).fail(function(xhr, status, error){
+        console.log('Total earned today request failed:', status, error);
     });
 }
 
@@ -623,40 +656,6 @@ function checkBrowserOnline(changeFlashContent){
             displayFlashMsg('Oops! Bug? Unable to process your request. Please try again or report error', '', 'red', '', false);
     }
 }
-
-
-/**
- * 
- * @param {type} devFolderName
- * @param {type} prodFolderName
- * @returns {String}
- */
-function setAppRoot(devFolderName, prodFolderName){
-    var hostname = window.location.hostname;
-
-    /*
-     * set the appRoot
-     * This will work for both http, https with or without www
-     * @type String
-     */
-    
-    //attach trailing slash to both foldernames
-    var devFolder = devFolderName ? devFolderName+"/" : "";
-    var prodFolder = prodFolderName ? prodFolderName+"/" : "";
-    
-    var baseURL = "";
-    
-    if(hostname.search("localhost") !== -1 || (hostname.search("192.168.") !== -1)  || (hostname.search("127.0.0.") !== -1)){
-        baseURL = window.location.origin+"/"+devFolder;
-    }
-    
-    else{
-        baseURL = window.location.origin+"/"+prodFolder;
-    }
-    
-    return baseURL;
-}
-
 
 
 function inArray(value, array){

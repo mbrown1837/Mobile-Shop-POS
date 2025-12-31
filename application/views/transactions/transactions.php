@@ -351,5 +351,5 @@ defined('BASEPATH') OR exit('');
     </div>
 </div>
 
-<script src="<?=base_url()?>public/js/pos.js"></script>
+<script src="<?=base_url()?>public/js/pos.js?v=<?=time()?>"></script>
 <script src="<?=base_url('public/ext/datetimepicker/bootstrap-datepicker.min.js')?>"></script>

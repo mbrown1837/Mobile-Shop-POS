@@ -1380,4 +1380,56 @@ class Transactions extends CI_Controller
 
     $this->output->set_content_type('application/json')->set_output(json_encode($json));
   }
+
+  /**
+   * Display receipt page
+   * @param string $ref - Transaction reference
+   */
+  public function receipt($ref = '')
+  {
+    if (empty($ref)) {
+      show_404();
+      return;
+    }
+
+    // Get transaction info
+    $transInfo = $this->transaction->getTransInfo($ref);
+
+    if (!$transInfo) {
+      show_404();
+      return;
+    }
+
+    // Prepare data for receipt view
+    $cumAmount = $transInfo[0]['totalMoneySpent'];
+    $amountTendered = $transInfo[0]['amountTendered'];
+    $changeDue = $transInfo[0]['changeDue'];
+    $transDate = $transInfo[0]['transDate'];
+    $modeOfPayment = $transInfo[0]['modeOfPayment'];
+    $vatAmount = $transInfo[0]['vatAmount'];
+    $vatPercentage = $transInfo[0]['vatPercentage'];
+    $discountAmount = $transInfo[0]['discount_amount'];
+    $discountPercentage = $transInfo[0]['discount_percentage'];
+    $cust_name = $transInfo[0]['cust_name'];
+    $cust_phone = $transInfo[0]['cust_phone'];
+    $cust_email = $transInfo[0]['cust_email'];
+
+    $data['allTransInfo'] = $transInfo;
+    $data['cumAmount'] = $cumAmount;
+    $data['amountTendered'] = $amountTendered;
+    $data['changeDue'] = $changeDue;
+    $data['ref'] = $ref;
+    $data['transDate'] = $transDate;
+    $data['_mop'] = $modeOfPayment;
+    $data['vatAmount'] = $vatAmount;
+    $data['vatPercentage'] = $vatPercentage;
+    $data['discountAmount'] = $discountAmount;
+    $data['discountPercentage'] = $discountPercentage;
+    $data['cust_name'] = $cust_name;
+    $data['cust_phone'] = $cust_phone;
+    $data['cust_email'] = $cust_email;
+
+    // Load receipt view
+    $this->load->view('transactions/transreceipt', $data);
+  }
 }

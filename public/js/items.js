@@ -57,17 +57,59 @@ $(document).ready(function() {
         }
     });
     
-    // Auto-focus next IMEI field
+    // Auto-focus next IMEI field and validate
     $(document).on('input', '.imei-input', function() {
-        const value = $(this).val();
-        if (value.length === 15 && /^\d{15}$/.test(value)) {
-            const currentId = $(this).data('imei-id');
-            const nextField = $(`.imei-field-row[data-imei-id="${currentId}"]`).next('.imei-field-row');
-            
-            if (nextField.length > 0) {
-                nextField.find('.imei-input').focus();
+        const $input = $(this);
+        const value = $input.val();
+        const $row = $input.closest('.imei-field-row');
+        
+        // Remove any existing validation messages
+        $row.find('.imei-validation-msg').remove();
+        $input.removeClass('border-danger border-success');
+        
+        if (value.length === 15) {
+            if (/^\d{15}$/.test(value)) {
+                // Valid format - check for duplicates
+                $input.prop('disabled', true);
+                
+                $.ajax({
+                    url: appRoot + 'items/checkImeiExists',
+                    type: 'POST',
+                    data: { imei: value },
+                    dataType: 'json',
+                    success: function(response) {
+                        $input.prop('disabled', false);
+                        
+                        if (response.exists) {
+                            // IMEI already exists
+                            $input.addClass('border-danger');
+                            $row.append('<div class="imei-validation-msg"><small class="text-danger"><i class="fa fa-times-circle"></i> This IMEI already exists in the system!</small></div>');
+                        } else {
+                            // IMEI is unique
+                            $input.addClass('border-success');
+                            $row.append('<div class="imei-validation-msg"><small class="text-success"><i class="fa fa-check-circle"></i> Valid & unique</small></div>');
+                            
+                            // Auto-focus next field
+                            const currentId = $input.data('imei-id');
+                            const nextField = $(`.imei-field-row[data-imei-id="${currentId}"]`).next('.imei-field-row');
+                            
+                            if (nextField.length > 0) {
+                                nextField.find('.imei-input').focus();
+                            } else {
+                                addImeiField();
+                            }
+                        }
+                    },
+                    error: function() {
+                        $input.prop('disabled', false);
+                        $input.addClass('border-danger');
+                        $row.append('<div class="imei-validation-msg"><small class="text-danger">Error checking IMEI</small></div>');
+                    }
+                });
             } else {
-                addImeiField();
+                // Invalid format
+                $input.addClass('border-danger');
+                $row.append('<div class="imei-validation-msg"><small class="text-danger"><i class="fa fa-times-circle"></i> Must be 15 digits only</small></div>');
             }
         }
     });
@@ -138,15 +180,35 @@ $(document).ready(function() {
             const color = $('#itemColor').val();
             const costPrice = $('#itemCostPrice').val();
             
+            // Check for duplicate IMEIs in form
+            const imeiValues = [];
             $('.imei-field-row').each(function() {
-                const imei = $(this).find('input[name="imeiNumbers[]"]').val();
+                const $input = $(this).find('input[name="imeiNumbers[]"]');
+                const imei = $input.val();
                 
                 if (imei) {
+                    // Check format
                     if (!/^\d{15}$/.test(imei)) {
                         $('#imeiFieldsErr').text('All IMEI numbers must be exactly 15 digits');
                         hasError = true;
                         return false;
                     }
+                    
+                    // Check if IMEI has error indicator (red border)
+                    if ($input.hasClass('border-danger')) {
+                        $('#imeiFieldsErr').text('Please fix invalid/duplicate IMEI numbers before submitting');
+                        hasError = true;
+                        return false;
+                    }
+                    
+                    // Check for duplicates within form
+                    if (imeiValues.includes(imei)) {
+                        $('#imeiFieldsErr').text('Duplicate IMEI numbers in form: ' + imei);
+                        hasError = true;
+                        return false;
+                    }
+                    
+                    imeiValues.push(imei);
                     imeiNumbers.push({
                         imei: imei,
                         color: color || '',
@@ -167,28 +229,34 @@ $(document).ready(function() {
         
         $(this).prop('disabled', true).text('Adding...');
         
+        // Debug: Log the data being sent
+        console.log('Sending item data:', formData);
+        
         $.ajax({
-            url: baseUrl + 'index.php/items/add',
+            url: appRoot + 'items/add',
             type: 'POST',
             data: formData,
             dataType: 'json',
             success: function(response) {
                 if (response.status === 1) {
-                    alert(response.msg);
+                    showNotification('success', response.msg);
                     $('#addNewItemForm')[0].reset();
                     $('#createNewItemDiv').addClass('hidden');
                     $('#itemsListDiv').removeClass('col-sm-8').addClass('col-sm-12');
+                    $('#imeiFieldsList').empty();
+                    imeiCounter = 0;
                     lilt();
                 } else {
-                    $('#addCustErrMsg').html('<div class="alert alert-danger">' + response.msg + '</div>');
+                    showNotification('error', response.msg);
                     if (response.itemName) $('#itemNameErr').text(response.itemName);
                     if (response.itemPrice) $('#itemPriceErr').text(response.itemPrice);
                     if (response.itemQuantity) $('#itemQuantityErr').text(response.itemQuantity);
                     if (response.itemCategory) $('#itemCategoryErr').text(response.itemCategory);
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status, error) {
+                console.error('Add item error:', xhr.responseText);
+                showNotification('error', 'Failed to add item. Please try again.');
             },
             complete: function() {
                 $('#addNewItem').prop('disabled', false).text('Add Item');
@@ -215,6 +283,11 @@ $(document).ready(function() {
     
     // Category Filter Change
     $('#categoryFilter').on('change', function() {
+        lilt();
+    });
+    
+    // Item Type Filter Change
+    $('#itemTypeFilter').on('change', function() {
         lilt();
     });
     
@@ -248,22 +321,74 @@ $(document).ready(function() {
     // Edit Item Button
     $(document).on('click', '.editItem', function() {
         const itemId = $(this).attr('id').split('-')[1];
-        const itemName = $('#itemName-' + itemId).text();
-        const itemCode = $('#itemCode-' + itemId).text();
-        const itemPrice = $('#itemPrice-' + itemId).text().replace(/,/g, '');
-        const itemDescription = $('#itemDescription-' + itemId).text();
         
-        $('#itemIdEdit').val(itemId);
-        $('#itemNameEdit').val(itemName);
-        $('#itemCodeEdit').val(itemCode);
-        $('#itemPriceEdit').val(itemPrice);
-        $('#itemDescriptionEdit').val(itemDescription);
+        console.log('Fetching item details for ID:', itemId);
         
-        $('#editItemModal').modal('show');
+        // Fetch full item details via AJAX
+        $.ajax({
+            url: appRoot + 'items/getItemDetails',
+            type: 'POST',
+            data: { itemId: itemId },
+            dataType: 'json',
+            success: function(response) {
+                console.log('Item details response:', response);
+                if (response.status === 1 && response.item) {
+                    const item = response.item;
+                    
+                    $('#itemIdEdit').val(item.id);
+                    $('#itemNameEdit').val(item.name);
+                    $('#itemCodeEdit').val(item.code);
+                    $('#itemPriceEdit').val(item.unitPrice);
+                    $('#itemDescriptionEdit').val(item.description || '');
+                    $('#itemCategoryEdit').val(item.category || '');
+                    $('#itemBrandEdit').val(item.brand || '');
+                    $('#itemModelEdit').val(item.model || '');
+                    $('#itemCostPriceEdit').val(item.cost_price || '');
+                    $('#warrantyMonthsEdit').val(item.warranty_months || 0);
+                    $('#itemTypeEdit').val(item.item_type || 'standard');
+                    
+                    // Show/hide IMEI management section based on item type
+                    if (item.item_type === 'serialized') {
+                        $('#editImeiManagementSection').show();
+                        // Store item details for IMEI button
+                        $('#editImeiManagementSection').data('item-id', item.id);
+                        $('#editImeiManagementSection').data('item-name', item.name);
+                    } else {
+                        $('#editImeiManagementSection').hide();
+                    }
+                    
+                    $('#editItemModal').modal('show');
+                } else {
+                    showNotification('error', 'Error loading item details: ' + (response.msg || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to load item details:', xhr.responseText);
+                showNotification('error', 'Failed to load item details. Please try again.');
+            }
+        });
+    });
+    
+    // View IMEIs from Edit Modal
+    $(document).on('click', '.view-imeis-edit', function() {
+        const itemId = $('#editImeiManagementSection').data('item-id');
+        const itemName = $('#editImeiManagementSection').data('item-name');
+        const itemCode = $('#itemCodeEdit').val();
+        
+        // Close edit modal
+        $('#editItemModal').modal('hide');
+        
+        // Open IMEI modal
+        $('#imeiModalItemName').text(itemName);
+        $('#imeiModalItemCode').text('(' + itemCode + ')');
+        $('#imeiStatusFilter').val('');
+        
+        // Trigger the IMEI view (the modal script will handle loading)
+        $('.view-imeis[data-item-id="' + itemId + '"]').trigger('click');
     });
     
     // Save Edit Item
-    $('#editItemSubmit').on('click', function() {
+    $('#editItemSubmit').off('click').on('click', function() {
         $('.errMsg').text('');
         
         const itemId = $('#itemIdEdit').val();
@@ -271,6 +396,11 @@ $(document).ready(function() {
         const itemCode = $('#itemCodeEdit').val();
         const itemPrice = $('#itemPriceEdit').val();
         const itemDescription = $('#itemDescriptionEdit').val();
+        const itemCategory = $('#itemCategoryEdit').val();
+        const itemBrand = $('#itemBrandEdit').val();
+        const itemModel = $('#itemModelEdit').val();
+        const itemCostPrice = $('#itemCostPriceEdit').val();
+        const warrantyMonths = $('#warrantyMonthsEdit').val();
         
         if (!itemName) {
             $('#itemNameEditErr').text('Item name is required');
@@ -281,63 +411,102 @@ $(document).ready(function() {
             return;
         }
         
-        $(this).prop('disabled', true).text('Saving...');
+        $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        
+        console.log('Submitting edit with data:', {itemId, itemName, itemPrice});
         
         $.ajax({
-            url: baseUrl + 'index.php/items/edit',
+            url: appRoot + 'items/edit',
             type: 'POST',
             data: {
                 itemId: itemId,
                 itemName: itemName,
                 itemCode: itemCode,
                 itemPrice: itemPrice,
-                itemDescription: itemDescription
+                itemDescription: itemDescription,
+                itemCategory: itemCategory,
+                itemBrand: itemBrand,
+                itemModel: itemModel,
+                itemCostPrice: itemCostPrice,
+                warrantyMonths: warrantyMonths
             },
             dataType: 'json',
             success: function(response) {
+                console.log('Edit response:', response);
                 if (response.status === 1) {
-                    alert(response.msg);
+                    showNotification('success', response.msg || 'Item updated successfully');
                     $('#editItemModal').modal('hide');
                     lilt();
                 } else {
-                    $('#editItemFMsg').html('<div class="alert alert-danger">' + response.msg + '</div>');
+                    $('#editItemFMsg').html('<div class="alert alert-danger">' + (response.msg || 'Update failed') + '</div>');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status, error) {
+                console.error('Edit error:', xhr.responseText);
+                showNotification('error', 'An error occurred. Please try again.');
             },
             complete: function() {
-                $('#editItemSubmit').prop('disabled', false).text('Save');
+                $('#editItemSubmit').prop('disabled', false).html('<i class="fa fa-save"></i> Save');
             }
         });
     });
     
     // Delete Item Button
     $(document).on('click', '.delItem', function() {
-        if (!confirm('Are you sure you want to delete this item?')) {
-            return;
-        }
-        
         const itemId = $(this).closest('tr').find('.curItemId').val();
+        const itemName = $('#itemName-' + itemId).text();
         
+        // Show delete confirmation modal
+        $('#deleteItemId').val(itemId);
+        $('#deleteItemName').text(itemName);
+        $('#deleteItemModal').modal('show');
+    });
+    
+    // Confirm Delete Button
+    $('#confirmDeleteBtn').on('click', function() {
+        const itemId = $('#deleteItemId').val();
+        $('#deleteItemModal').modal('hide');
+        deleteItem(itemId);
+    });
+    
+    function deleteItem(itemId) {
         $.ajax({
-            url: baseUrl + 'index.php/items/delete',
+            url: appRoot + 'items/delete',
             type: 'POST',
             data: { itemId: itemId },
             dataType: 'json',
             success: function(response) {
                 if (response.status === 1) {
-                    alert(response.msg);
+                    // Show success message
+                    showNotification('success', response.msg || 'Item deleted successfully');
                     lilt();
                 } else {
-                    alert(response.msg);
+                    showNotification('error', response.msg || 'Failed to delete item');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr) {
+                showNotification('error', 'An error occurred while deleting the item');
             }
         });
-    });
+    }
+    
+    function showNotification(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        const notification = $('<div class="alert ' + alertClass + ' alert-dismissible fade in" style="position:fixed;top:70px;right:20px;z-index:9999;min-width:300px;">' +
+            '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+            '<i class="fa ' + icon + '"></i> ' + message +
+            '</div>');
+        
+        $('body').append(notification);
+        
+        setTimeout(function() {
+            notification.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
     
     // Update Stock Button
     $(document).on('click', '.updateStock', function() {
@@ -357,6 +526,7 @@ $(document).ready(function() {
     // Submit Stock Update
     $('#stockUpdateSubmit').on('click', function() {
         $('.errMsg').text('');
+        $('#stockUpdateFMsg').html('');
         
         const itemId = $('#stockUpdateItemId').val();
         const updateType = $('#stockUpdateType').val();
@@ -371,35 +541,34 @@ $(document).ready(function() {
             $('#stockUpdateQuantityErr').text('Please enter valid quantity');
             return;
         }
-        if (!description) {
-            $('#stockUpdateDescriptionErr').text('Please enter description');
-            return;
-        }
+        // Description is optional, use default if empty
+        const desc = description || 'Stock update - ' + updateType;
         
         $(this).prop('disabled', true).text('Updating...');
         
         $.ajax({
-            url: baseUrl + 'index.php/items/updatestock',
+            url: appRoot + 'items/updatestock',
             type: 'POST',
             data: {
-                itemId: itemId,
-                updateType: updateType,
-                quantity: quantity,
-                description: description
+                _iId: itemId,
+                _upType: updateType,
+                qty: quantity,
+                desc: desc
             },
             dataType: 'json',
             success: function(response) {
                 if (response.status === 1) {
-                    alert(response.msg);
+                    showNotification('success', response.msg || 'Stock updated successfully');
                     $('#updateStockModal').modal('hide');
                     $('#updateStockForm')[0].reset();
                     lilt();
                 } else {
-                    $('#stockUpdateFMsg').html('<div class="alert alert-danger">' + response.msg + '</div>');
+                    $('#stockUpdateFMsg').html('<div class="alert alert-danger">' + (response.msg || 'Update failed') + '</div>');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr) {
+                console.error('Stock update error:', xhr.responseText);
+                showNotification('error', 'An error occurred. Please try again.');
             },
             complete: function() {
                 $('#stockUpdateSubmit').prop('disabled', false).text('Update');
@@ -415,6 +584,7 @@ function lilt(url) {
     const limit = $('#itemsListPerPage').val() || 10;
     const sortBy = $('#itemsListSortBy').val() || 'name-ASC';
     const category = $('#categoryFilter').val() || '';
+    const itemType = $('#itemTypeFilter').val() || '';
     const searchTerm = $('#itemSearch').val().trim() || '';
     const sortParts = sortBy.split('-');
     const orderBy = sortParts[0];
@@ -428,6 +598,7 @@ function lilt(url) {
             orderBy: orderBy,
             orderFormat: orderFormat,
             category: category,
+            itemType: itemType,
             search: searchTerm
         },
         dataType: 'json',

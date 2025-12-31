@@ -14,6 +14,14 @@ class Dashboard extends CI_Controller
   {
     parent::__construct();
 
+    // For AJAX requests, return JSON error instead of redirect
+    if ($this->input->is_ajax_request() && empty($_SESSION['admin_id'])) {
+      $this->output->set_content_type('application/json')
+                   ->set_output(json_encode(['status' => 0, 'error' => 'Session expired']))
+                   ->_display();
+      exit;
+    }
+
     $this->genlib->checkLogin();
 
     $this->load->model(['item', 'transaction', 'analytic']);
@@ -147,11 +155,13 @@ class Dashboard extends CI_Controller
 
     if ($payment_methods) {
       foreach ($payment_methods as $get) {
-        if ($get->modeOfPayment == "Cash") {
+        $payment = strtolower(trim($get->modeOfPayment));
+        
+        if ($payment == "cash") {
           $cash++;
-        } else if ($get->modeOfPayment == "POS") {
+        } else if ($payment == "pos") {
           $pos++;
-        } else if ($get->modeOfPayment === "Cash and POS") {
+        } else if ($payment == "cash and pos" || $payment == "partial") {
           $cash_and_pos++;
         }
       }
@@ -159,9 +169,16 @@ class Dashboard extends CI_Controller
       //calculate the percentage of each
       $total = $cash + $pos + $cash_and_pos;
 
-      $cash_percentage = round(($cash / $total) * 100, 2);
-      $pos_percentage =  round(($pos / $total) * 100, 2);
-      $cash_and_pos_percentage = round(($cash_and_pos / $total) * 100, 2);
+      // Prevent division by zero
+      if ($total > 0) {
+        $cash_percentage = round(($cash / $total) * 100, 2);
+        $pos_percentage =  round(($pos / $total) * 100, 2);
+        $cash_and_pos_percentage = round(($cash_and_pos / $total) * 100, 2);
+      } else {
+        $cash_percentage = 0;
+        $pos_percentage = 0;
+        $cash_and_pos_percentage = 0;
+      }
 
       $json['status'] = 1;
       $json['cash'] = $cash_percentage;

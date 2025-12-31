@@ -3,6 +3,9 @@
  * Handles IMEI search, cart management, and transaction processing
  */
 
+// Define base URL
+var baseUrl = (typeof appRoot !== 'undefined') ? appRoot : (window.location.protocol + '//' + window.location.host + '/mobile-shop-pos/');
+
 $(document).ready(function() {
     let selectedCustomerId = null;
     let tradeInData = null;
@@ -774,11 +777,6 @@ $(document).ready(function() {
             }
         }
 
-        // Confirm transaction
-        if (!confirm('Complete this transaction?')) {
-            return;
-        }
-
         // Prepare transaction data
         const transactionData = {
             cart_items: JSON.stringify(cartItems),
@@ -802,19 +800,14 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.status === 1) {
-                    showSuccess('Transaction completed! Ref: ' + response.ref);
-                    
-                    // Reset form
+                    // Reset form first
                     resetPOS();
                     
                     // Reload transaction list
                     loadTransactionList();
                     
-                    // Show receipt option
-                    if (confirm('Transaction completed successfully!\n\nRef: ' + response.ref + '\nTotal: Rs. ' + response.grand_total + '\n\nView receipt?')) {
-                        // TODO: Open receipt modal or print
-                        window.open(baseUrl + 'index.php/transactions/receipt/' + response.ref, '_blank');
-                    }
+                    // Show success modal with receipt option
+                    showTransactionSuccess(response.ref, response.grand_total);
                 } else {
                     showError(response.msg);
                 }
@@ -948,6 +941,72 @@ $(document).ready(function() {
         }, 3000);
     }
 
+    function showTransactionSuccess(ref, total) {
+        // Show success toast
+        showSuccess('Transaction completed! Ref: ' + ref);
+        
+        // Show modal with receipt option
+        const modalHtml = '<div class="modal fade" id="transactionSuccessModal" tabindex="-1">' +
+            '<div class="modal-dialog">' +
+            '<div class="modal-content">' +
+            '<div class="modal-header bg-success text-white">' +
+            '<h4 class="modal-title"><i class="fa fa-check-circle"></i> Transaction Completed!</h4>' +
+            '<button type="button" class="close text-white" data-dismiss="modal">&times;</button>' +
+            '</div>' +
+            '<div class="modal-body text-center">' +
+            '<p class="lead">Transaction processed successfully</p>' +
+            '<div class="well" style="background: #f5f5f5; padding: 20px; margin: 20px 0;">' +
+            '<h3 style="margin: 0; color: #333;">Ref: ' + ref + '</h3>' +
+            '<h4 style="margin: 10px 0; color: #5cb85c;">Total: Rs. ' + total + '</h4>' +
+            '</div>' +
+            '<p>Would you like to view the receipt?</p>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
+            '<button type="button" class="btn btn-primary" onclick="viewReceipt(\'' + ref + '\')"><i class="fa fa-file-text"></i> View Receipt</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+        
+        // Remove existing modal if any
+        $('#transactionSuccessModal').remove();
+        
+        // Add and show modal
+        $('body').append(modalHtml);
+        $('#transactionSuccessModal').modal('show');
+        
+        // Remove modal from DOM after it's hidden
+        $('#transactionSuccessModal').on('hidden.bs.modal', function() {
+            $(this).remove();
+        });
+    }
+
+    // View receipt function
+    window.viewReceipt = function(ref) {
+        $('#transactionSuccessModal').modal('hide');
+        // Open receipt in modal instead of new window
+        $('#transReceiptModal').modal('show');
+        $('#transReceipt').html('<i class="fa fa-spinner fa-spin"></i> Loading receipt...');
+        
+        $.ajax({
+            url: baseUrl + 'transactions/vtr_',
+            type: 'POST',
+            data: {ref: ref},
+            success: function(response) {
+                if (response.status === 1) {
+                    $('#transReceipt').html(response.transReceipt);
+                } else {
+                    $('#transReceipt').html('<p class="text-danger">Receipt not found</p>');
+                }
+            },
+            error: function() {
+                $('#transReceipt').html('<p class="text-danger">Error loading receipt</p>');
+            }
+        });
+    };
+
     // Auto-refresh cart on page load
     refreshCart();
 });
+

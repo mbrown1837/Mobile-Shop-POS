@@ -22,7 +22,9 @@
                         <th>CATEGORY</th>
                         <th>BRAND</th>
                         <th>QTY/IMEI</th>
-                        <th>PRICE</th>
+                        <th>COST</th>
+                        <th>SELLING</th>
+                        <th>PROFIT</th>
                         <th>WARRANTY</th>
                         <th>ACTIONS</th>
                     </tr>
@@ -53,12 +55,43 @@
                         </td>
                         <td><?=isset($get->brand) ? $get->brand : '-'?></td>
                         <td class="<?=(isset($get->available_qty) ? $get->available_qty : $get->quantity) <= 10 ? 'bg-danger' : ((isset($get->available_qty) ? $get->available_qty : $get->quantity) <= 25 ? 'bg-warning' : '')?>">
-                            <span id="itemQuantity-<?=$get->id?>"><?=isset($get->available_qty) ? $get->available_qty : $get->quantity?></span>
+                            <?php 
+                            $qty = isset($get->available_qty) ? $get->available_qty : $get->quantity;
+                            ?>
+                            <span id="itemQuantity-<?=$get->id?>"><?=$qty?></span>
+                            <?php if($qty == 0): ?>
+                                <br><span class="label label-danger">SOLD OUT</span>
+                            <?php endif; ?>
                             <?php if(isset($get->item_type) && $get->item_type === 'serialized'): ?>
                                 <br><a href="#" class="btn btn-xs btn-info view-imeis" data-item-id="<?=$get->id?>" data-item-name="<?=$get->name?>"><i class="fa fa-list"></i> IMEIs</a>
                             <?php endif; ?>
                         </td>
-                        <td>Rs. <span id="itemPrice-<?=$get->id?>"><?=number_format($get->unitPrice, 2)?></span></td>
+                        <td>
+                            <?php 
+                            // Debug output
+                            $cost = isset($get->cost_price) ? floatval($get->cost_price) : 0;
+                            // Temporary debug: echo "<!-- Cost: " . $cost . " Raw: " . (isset($get->cost_price) ? $get->cost_price : 'NOT SET') . " -->";
+                            if($cost > 0): ?>
+                                <small class="text-muted">Rs.</small> <?=number_format($cost, 2)?>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><strong>Rs. <span id="itemPrice-<?=$get->id?>"><?=number_format($get->unitPrice, 2)?></span></strong></td>
+                        <td>
+                            <?php 
+                            $cost = isset($get->cost_price) ? floatval($get->cost_price) : 0;
+                            $selling = floatval($get->unitPrice);
+                            $profit = $selling - $cost;
+                            
+                            if($cost > 0) {
+                                $profitClass = $profit > 0 ? 'text-success' : ($profit < 0 ? 'text-danger' : 'text-muted');
+                                echo '<span class="' . $profitClass . '"><strong>Rs. ' . number_format($profit, 2) . '</strong></span>';
+                            } else {
+                                echo '<span class="text-muted">-</span>';
+                            }
+                            ?>
+                        </td>
                         <td><?php if(isset($get->warranty_months) && $get->warranty_months > 0): ?><span class="label label-success"><?=$get->warranty_months?>m</span><?php else: ?>-<?php endif; ?></td>
                         <td>
                             <div class="btn-group-vertical btn-group-xs">

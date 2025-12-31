@@ -69,11 +69,27 @@ class Items extends CI_Controller
     $orderBy = $this->input->get('orderBy', TRUE) ? $this->input->get('orderBy', TRUE) : "name";
     $orderFormat = $this->input->get('orderFormat', TRUE) ? $this->input->get('orderFormat', TRUE) : "ASC";
     $category = $this->input->get('category', TRUE);
+    $itemType = $this->input->get('itemType', TRUE);
     $searchTerm = $this->input->get('search', TRUE);
 
     // If search term provided, use search method
     if (!empty($searchTerm)) {
       $data['allItems'] = $this->item->itemsearch($searchTerm);
+      
+      // Apply filters to search results
+      if ($data['allItems']) {
+        if ($category) {
+          $data['allItems'] = array_filter($data['allItems'], function($item) use ($category) {
+            return $item->category === $category;
+          });
+        }
+        if ($itemType) {
+          $data['allItems'] = array_filter($data['allItems'], function($item) use ($itemType) {
+            return $item->item_type === $itemType;
+          });
+        }
+      }
+      
       $totalItems = $data['allItems'] ? count($data['allItems']) : 0;
       $data['range'] = $totalItems > 0 ? "Found " . $totalItems . " item(s)" : "No items found";
       $data['links'] = '';
@@ -86,8 +102,10 @@ class Items extends CI_Controller
     }
 
     //count the total number of items in db
-    if ($category) {
-      $totalItems = $this->db->where('category', $category)->count_all_results('items');
+    if ($category || $itemType) {
+      if ($category) $this->db->where('category', $category);
+      if ($itemType) $this->db->where('item_type', $itemType);
+      $totalItems = $this->db->count_all_results('items');
     } else {
       $totalItems = $this->db->count_all('items');
     }
@@ -107,6 +125,9 @@ class Items extends CI_Controller
     //get all items from db with optional category filter
     if ($category) {
       $this->db->where('category', $category);
+    }
+    if ($itemType) {
+      $this->db->where('item_type', $itemType);
     }
     $data['allItems'] = $this->item->getAll($orderBy, $orderFormat, $start, $limit);
     $data['range'] = $totalItems > 0 ? "Showing " . ($start + 1) . "-" . ($start + count($data['allItems'])) . " of " . $totalItems : "";
@@ -161,22 +182,49 @@ class Items extends CI_Controller
       foreach(['itemBrand' => 'brand', 'itemModel' => 'model', 'itemCategory' => 'category', 'warrantyMonths' => 'warranty_months', 'warrantyTerms' => 'warranty_terms'] as $post => $field) {
         if($this->input->post($post, TRUE)) $itemData[$field] = $this->input->post($post, TRUE);
       }
-      if($itemType === 'standard') $itemData['quantity'] = set_value('itemQuantity');
+      if($itemType === 'standard') {
+        $itemData['quantity'] = set_value('itemQuantity');
+        // For standard items, set cost_price if provided
+        $costPrice = $this->input->post('itemCostPrice', TRUE);
+        if($costPrice && is_numeric($costPrice)) {
+          $itemData['cost_price'] = $costPrice;
+        }
+      }
       
       $insertedId = $this->item->addWithType($itemData);
       
       if($insertedId && $itemType === 'serialized') {
         $imeiNumbers = $this->input->post('imeiNumbers', TRUE);
-        $imeiData = []; $imeiErrors = [];
-        foreach($imeiNumbers as $index => $imei) {
-          $imeiClean = trim($imei['imei']);
-          if(!preg_match('/^\d{15}$/', $imeiClean)) { $imeiErrors[] = "IMEI #".($index+1).": Invalid format"; continue; }
-          $imeiData[] = ['imei' => $imeiClean, 'color' => $imei['color'] ?? '', 'storage' => $imei['storage'] ?? '', 'cost_price' => $imei['cost_price'] ?? set_value('itemPrice')];
-        }
-        if(!empty($imeiData)) {
-          $imeiResult = $this->item->addSerialNumber($insertedId, $imeiData);
-          if(is_array($imeiResult)) $imeiErrors = array_merge($imeiErrors, $imeiResult);
-          elseif($imeiResult === FALSE) $imeiErrors[] = "Failed to add IMEI numbers";
+        
+        // Debug: Log received IMEI data
+        log_message('debug', 'Received IMEI data: ' . print_r($imeiNumbers, true));
+        
+        if(empty($imeiNumbers) || !is_array($imeiNumbers)) {
+          $imeiErrors[] = "No IMEI data received from form";
+        } else {
+          $imeiData = []; $imeiErrors = []; $totalCost = 0; $costCount = 0;
+          foreach($imeiNumbers as $index => $imei) {
+            $imeiClean = trim($imei['imei']);
+            if(!preg_match('/^\d{15}$/', $imeiClean)) { $imeiErrors[] = "IMEI #".($index+1).": Invalid format"; continue; }
+            $costPrice = isset($imei['cost_price']) && is_numeric($imei['cost_price']) ? floatval($imei['cost_price']) : floatval(set_value('itemPrice'));
+            $imeiData[] = ['imei' => $imeiClean, 'color' => $imei['color'] ?? '', 'storage' => $imei['storage'] ?? '', 'cost_price' => $costPrice];
+            $totalCost += $costPrice;
+            $costCount++;
+          }
+          
+          if(!empty($imeiData)) {
+            $imeiResult = $this->item->addSerialNumber($insertedId, $imeiData);
+            if(is_array($imeiResult)) $imeiErrors = array_merge($imeiErrors, $imeiResult);
+            elseif($imeiResult === FALSE) $imeiErrors[] = "Failed to add IMEI numbers";
+            
+            // Update items table with average cost_price
+            if($costCount > 0) {
+              $avgCost = $totalCost / $costCount;
+              $this->db->where('id', $insertedId)->update('items', ['cost_price' => $avgCost]);
+            }
+          } else {
+            $imeiErrors[] = "No valid IMEI numbers to add";
+          }
         }
       }
       
@@ -336,6 +384,68 @@ class Items extends CI_Controller
 
   public function edit() {
     $this->genlib->ajaxOnly();
+    
+    // Check if using new parameter names (from updated frontend)
+    $itemId = $this->input->post('itemId', TRUE);
+    if ($itemId) {
+      try {
+        // New edit format
+        $itemName = trim($this->input->post('itemName', TRUE));
+        $itemPrice = trim($this->input->post('itemPrice', TRUE));
+        
+        if (empty($itemName) || empty($itemPrice)) {
+          $json = ['status' => 0, 'msg' => 'Item name and price are required'];
+          $this->output->set_content_type('application/json')->set_output(json_encode($json));
+          return;
+        }
+
+        $updateData = [
+          'name' => $itemName,
+          'unitPrice' => $itemPrice
+        ];
+        
+        // Add optional fields only if they have values
+        $description = trim($this->input->post('itemDescription', TRUE));
+        if ($description) $updateData['description'] = $description;
+        
+        $category = trim($this->input->post('itemCategory', TRUE));
+        if ($category) $updateData['category'] = $category;
+        
+        $brand = trim($this->input->post('itemBrand', TRUE));
+        if ($brand) $updateData['brand'] = $brand;
+        
+        $model = trim($this->input->post('itemModel', TRUE));
+        if ($model) $updateData['model'] = $model;
+        
+        $warrantyMonths = $this->input->post('warrantyMonths', TRUE);
+        if ($warrantyMonths !== null && $warrantyMonths !== '') {
+          $updateData['warranty_months'] = (int)$warrantyMonths;
+        }
+
+        // Add cost price if provided
+        $costPrice = trim($this->input->post('itemCostPrice', TRUE));
+        if ($costPrice) {
+          $updateData['cost_price'] = $costPrice;
+        }
+
+        $this->db->where('id', $itemId);
+        $updated = $this->db->update('items', $updateData);
+
+        if ($updated || $this->db->affected_rows() >= 0) {
+          $this->genmod->addevent('Item Updated', $itemId, 'Item details updated', 'items', $this->session->admin_id);
+          $json = ['status' => 1, 'msg' => 'Item updated successfully'];
+        } else {
+          $json = ['status' => 0, 'msg' => 'Update failed'];
+        }
+      } catch (Exception $e) {
+        $json = ['status' => 0, 'msg' => 'Error: ' . $e->getMessage()];
+      }
+
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+    
+    // Old edit format (keep for backward compatibility)
     $this->load->library('form_validation');
     $this->form_validation->set_error_delimiters('', '');
     $this->form_validation->set_rules('_iId', 'Item ID', ['required', 'trim', 'numeric']);
@@ -435,13 +545,50 @@ class Items extends CI_Controller
   {
     $this->genlib->ajaxOnly();
 
-    $json['status'] = 0;
-    $item_id = $this->input->post('i', TRUE);
+    $json = ['status' => 0, 'msg' => ''];
+    
+    try {
+      // Support both old parameter 'i' and new parameter 'itemId'
+      $item_id = $this->input->post('itemId', TRUE) ?: $this->input->post('i', TRUE);
 
-    if ($item_id) {
-      $this->db->where('id', $item_id)->delete('items');
+      if ($item_id) {
+        // Get item code first
+        $this->db->select('code');
+        $this->db->where('id', $item_id);
+        $item = $this->db->get('items')->row();
+        
+        if (!$item) {
+          $json['msg'] = 'Item not found';
+          $this->output->set_content_type('application/json')->set_output(json_encode($json));
+          return;
+        }
+        
+        // Check if item has been used in transactions (using itemCode)
+        $this->db->where('itemCode', $item->code);
+        $transCount = $this->db->count_all_results('transactions');
 
-      $json['status'] = 1;
+        if ($transCount > 0) {
+          $json['msg'] = 'Cannot delete item. It has been used in ' . $transCount . ' transaction(s).';
+        } else {
+          // Delete item
+          $this->db->where('id', $item_id);
+          $deleted = $this->db->delete('items');
+          
+          if ($deleted) {
+            // Log event
+            $this->genmod->addevent('Item Deleted', $item_id, 'Item deleted: ' . $item->code, 'items', $this->session->admin_id);
+            
+            $json['status'] = 1;
+            $json['msg'] = 'Item deleted successfully';
+          } else {
+            $json['msg'] = 'Failed to delete item from database';
+          }
+        }
+      } else {
+        $json['msg'] = 'Item ID is required';
+      }
+    } catch (Exception $e) {
+      $json['msg'] = 'Error: ' . $e->getMessage();
     }
 
     //set final output
@@ -615,6 +762,83 @@ class Items extends CI_Controller
     $json['status'] = 1;
     $json['units'] = $units;
 
+    $this->output->set_content_type('application/json')->set_output(json_encode($json));
+  }
+
+  /**
+   * Get item details for editing
+   */
+  public function getItemDetails()
+  {
+    // Allow AJAX requests
+    if (!$this->input->is_ajax_request()) {
+      $json = ['status' => 0, 'msg' => 'Invalid request'];
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    $itemId = $this->input->post('itemId');
+    
+    if (!$itemId) {
+      $json = ['status' => 0, 'msg' => 'Item ID is required'];
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+      return;
+    }
+
+    try {
+      $this->db->where('id', $itemId);
+      $item = $this->db->get('items')->row();
+
+      if ($item) {
+        $json = ['status' => 1, 'item' => $item];
+      } else {
+        $json = ['status' => 0, 'msg' => 'Item not found'];
+      }
+    } catch (Exception $e) {
+      $json = ['status' => 0, 'msg' => 'Database error: ' . $e->getMessage()];
+    }
+
+    $this->output->set_content_type('application/json')->set_output(json_encode($json));
+  }
+
+  /*
+    ********************************************************************************************************************************
+    ********************************************************************************************************************************
+    ********************************************************************************************************************************
+    ********************************************************************************************************************************
+    ********************************************************************************************************************************
+    */
+
+  /**
+   * Check if IMEI already exists in the system
+   * Real-time validation for better UX
+   */
+  public function checkImeiExists()
+  {
+    $this->genlib->ajaxOnly();
+    
+    $imei = $this->input->post('imei', TRUE);
+    $json = ['exists' => false];
+    
+    if (!empty($imei) && preg_match('/^\d{15}$/', $imei)) {
+      $this->db->where('imei_number', $imei);
+      $result = $this->db->get('item_serials');
+      
+      if ($result->num_rows() > 0) {
+        $json['exists'] = true;
+        $existingItem = $result->row();
+        
+        // Get item name for better error message
+        $this->db->where('id', $existingItem->item_id);
+        $item = $this->db->get('items')->row();
+        
+        if ($item) {
+          $json['item_name'] = $item->name;
+          $json['item_code'] = $item->code;
+        }
+      }
+    }
+    
     $this->output->set_content_type('application/json')->set_output(json_encode($json));
   }
 }

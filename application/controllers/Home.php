@@ -64,11 +64,38 @@ class Home extends CI_Controller
       $givenPassword = set_value('password');
 
       $passwordInDb = $this->genmod->getTableCol('admin', 'password', 'email', $givenEmail);
-      $account_status = $this->genmod->getTableCol('admin', 'account_status', 'email', $givenEmail);
-      $deleted = $this->genmod->getTableCol('admin', 'deleted', 'email', $givenEmail);
+      
+      // Check if account_status column exists, default to 1 if not
+      $account_status = 1;
+      $deleted = 0;
+      try {
+        $account_status = $this->genmod->getTableCol('admin', 'account_status', 'email', $givenEmail);
+        if ($account_status === FALSE) $account_status = 1;
+      } catch (Exception $e) {
+        $account_status = 1;
+      }
+      try {
+        $deleted = $this->genmod->getTableCol('admin', 'deleted', 'email', $givenEmail);
+        if ($deleted === FALSE) $deleted = 0;
+      } catch (Exception $e) {
+        $deleted = 0;
+      }
 
-      //verify password if $passwordInDb has a value (i.e. is set)
-      $verifiedPassword = $passwordInDb ? password_verify($givenPassword, $passwordInDb) : FALSE;
+      // Verify password - support both bcrypt and MD5 (legacy)
+      $verifiedPassword = FALSE;
+      if ($passwordInDb) {
+        // Try bcrypt first
+        if (password_verify($givenPassword, $passwordInDb)) {
+          $verifiedPassword = TRUE;
+        }
+        // Fallback to MD5 for legacy passwords
+        elseif (md5($givenPassword) === $passwordInDb) {
+          $verifiedPassword = TRUE;
+          // Upgrade to bcrypt
+          $newHash = password_hash($givenPassword, PASSWORD_DEFAULT);
+          $this->genmod->updateTableCol('admin', 'password', $newHash, 'email', $givenEmail);
+        }
+      }
 
       //allow log in if password and email matches and admin's account has not been suspended or deleted
       if ($verifiedPassword && $account_status != 0 && $deleted != 1) {

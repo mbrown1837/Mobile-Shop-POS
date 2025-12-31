@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Graph Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        #graphContainer {
+            margin-top: 20px;
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Dashboard Graph Debug Tool</h1>
+    <p><strong>Instructions:</strong> Login to dashboard first, then open this file</p>
+
+    <div class="test-section">
+        <h2>Step 1: Check Dependencies</h2>
+        <button onclick="checkDependencies()">Run Check</button>
+        <div id="depResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Check appRoot</h2>
+        <button onclick="checkAppRoot()">Check appRoot</button>
+        <div id="appRootResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test API Endpoints</h2>
+        <button onclick="testEarningsAPI()">Test Earnings API</button>
+        <button onclick="testPaymentAPI()">Test Payment API</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 4: Test Graph Rendering</h2>
+        <button onclick="testGraphRender()">Render Test Graph</button>
+        <div id="graphContainer">
+            <canvas id="testCanvas" width="400" height="200"></canvas>
+        </div>
+        <div id="graphResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 5: Call Dashboard Functions</h2>
+        <button onclick="callGetEarnings()">Call getEarnings()</button>
+        <button onclick="callLoadPaymentChart()">Call loadPaymentMethodChart()</button>
+        <div id="funcResult"></div>
+    </div>
+
+    <script>
+        // Check if dependencies are loaded
+        function checkDependencies() {
+            let result = '<h3>Dependency Check Results:</h3>';
+            
+            // Check jQuery
+            if (typeof jQuery !== 'undefined') {
+                result += '<p class="success">✓ jQuery loaded (v' + jQuery.fn.jquery + ')</p>';
+            } else {
+                result += '<p class="error">✗ jQuery NOT loaded</p>';
+            }
+            
+            // Check Chart.js
+            if (typeof Chart !== 'undefined') {
+                result += '<p class="success">✓ Chart.js loaded</p>';
+            } else {
+                result += '<p class="error">✗ Chart.js NOT loaded</p>';
+            }
+            
+            // Check main.js functions
+            if (typeof appRoot !== 'undefined') {
+                result += '<p class="success">✓ main.js loaded (appRoot defined)</p>';
+            } else {
+                result += '<p class="error">✗ main.js NOT loaded or appRoot not defined</p>';
+            }
+            
+            // Check dashboard.js functions
+            if (typeof getEarnings !== 'undefined') {
+                result += '<p class="success">✓ dashboard.js loaded (getEarnings defined)</p>';
+            } else {
+                result += '<p class="error">✗ dashboard.js NOT loaded or getEarnings not defined</p>';
+            }
+            
+            document.getElementById('depResult').innerHTML = result;
+        }
+        
+        // Check appRoot value
+        function checkAppRoot() {
+            let result = '<h3>appRoot Check:</h3>';
+            
+            if (typeof appRoot !== 'undefined') {
+                result += '<p class="success">✓ appRoot is defined</p>';
+                result += '<pre>appRoot = "' + appRoot + '"</pre>';
+                
+                // Test if appRoot is valid
+                if (appRoot.includes('localhost') || appRoot.includes('http')) {
+                    result += '<p class="success">✓ appRoot looks valid</p>';
+                } else {
+                    result += '<p class="warning">⚠ appRoot might be invalid</p>';
+                }
+            } else {
+                result += '<p class="error">✗ appRoot is NOT defined</p>';
+                result += '<p>This means main.js did not load properly</p>';
+            }
+            
+            document.getElementById('appRootResult').innerHTML = result;
+        }
+        
+        // Test Earnings API
+        function testEarningsAPI() {
+            if (typeof appRoot === 'undefined') {
+                document.getElementById('apiResult').innerHTML = '<p class="error">✗ appRoot not defined. Cannot test API.</p>';
+                return;
+            }
+            
+            document.getElementById('apiResult').innerHTML = '<p>Testing Earnings API...</p>';
+            
+            fetch(appRoot + 'index.php/dashboard/earningsGraph')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let result = '<h3>Earnings API Test:</h3>';
+                    result += '<p class="success">✓ API call successful</p>';
+                    result += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    document.getElementById('apiResult').innerHTML = result;
+                })
+                .catch(error => {
+                    let result = '<h3>Earnings API Test:</h3>';
+                    result += '<p class="error">✗ API call failed: ' + error.message + '</p>';
+                    result += '<p>Make sure you are logged in!</p>';
+                    document.getElementById('apiResult').innerHTML = result;
+                });
+        }
+        
+        // Test Payment API
+        function testPaymentAPI() {
+            if (typeof appRoot === 'undefined') {
+                document.getElementById('apiResult').innerHTML = '<p class="error">✗ appRoot not defined. Cannot test API.</p>';
+                return;
+            }
+            
+            document.getElementById('apiResult').innerHTML = '<p>Testing Payment API...</p>';
+            
+            fetch(appRoot + 'index.php/dashboard/paymentmethodchart')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let result = '<h3>Payment API Test:</h3>';
+                    result += '<p class="success">✓ API call successful</p>';
+                    result += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    document.getElementById('apiResult').innerHTML = result;
+                })
+                .catch(error => {
+                    let result = '<h3>Payment API Test:</h3>';
+                    result += '<p class="error">✗ API call failed: ' + error.message + '</p>';
+                    result += '<p>Make sure you are logged in!</p>';
+                    document.getElementById('apiResult').innerHTML = result;
+                });
+        }
+        
+        // Test graph rendering
+        function testGraphRender() {
+            if (typeof Chart === 'undefined') {
+                document.getElementById('graphResult').innerHTML = '<p class="error">✗ Chart.js not loaded. Cannot render graph.</p>';
+                return;
+            }
+            
+            try {
+                const ctx = document.getElementById('testCanvas').getContext('2d');
+                
+                const testData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        fillColor: 'rgba(255,255,255,1)',
+                        strokeColor: 'rgba(151,187,205,0.8)',
+                        highlightFill: 'rgba(242,245,233,1)',
+                        highlightStroke: 'rgba(151,187,205,1)',
+                        data: [65, 59, 80, 81, 56, 55]
+                    }]
+                };
+                
+                new Chart(ctx).Bar(testData, {
+                    responsive: true,
+                    scaleGridLineColor: 'rgba(0,0,0,0.1)',
+                    scaleShowHorizontalLines: true,
+                    scaleShowVerticalLines: false
+                });
+                
+                document.getElementById('graphResult').innerHTML = '<p class="success">✓ Test graph rendered successfully!</p>';
+            } catch (error) {
+                document.getElementById('graphResult').innerHTML = '<p class="error">✗ Graph rendering failed: ' + error.message + '</p>';
+            }
+        }
+        
+        // Call getEarnings function
+        function callGetEarnings() {
+            if (typeof getEarnings === 'undefined') {
+                document.getElementById('funcResult').innerHTML = '<p class="error">✗ getEarnings() function not defined</p>';
+                return;
+            }
+            
+            try {
+                getEarnings();
+                document.getElementById('funcResult').innerHTML = '<p class="success">✓ getEarnings() called. Check dashboard for graph.</p>';
+            } catch (error) {
+                document.getElementById('funcResult').innerHTML = '<p class="error">✗ Error calling getEarnings(): ' + error.message + '</p>';
+            }
+        }
+        
+        // Call loadPaymentMethodChart function
+        function callLoadPaymentChart() {
+            if (typeof loadPaymentMethodChart === 'undefined') {
+                document.getElementById('funcResult').innerHTML = '<p class="error">✗ loadPaymentMethodChart() function not defined</p>';
+                return;
+            }
+            
+            try {
+                loadPaymentMethodChart();
+                document.getElementById('funcResult').innerHTML = '<p class="success">✓ loadPaymentMethodChart() called. Check dashboard for chart.</p>';
+            } catch (error) {
+                document.getElementById('funcResult').innerHTML = '<p class="error">✗ Error calling loadPaymentMethodChart(): ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

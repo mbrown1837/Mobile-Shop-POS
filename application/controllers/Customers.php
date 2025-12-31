@@ -66,19 +66,21 @@ class Customers extends CI_Controller {
         
         $this->form_validation->set_rules('customerName', 'Customer name', ['required', 'trim', 'max_length[100]']);
         $this->form_validation->set_rules('customerPhone', 'Phone number', ['required', 'trim', 'max_length[20]', 'is_unique[customers.phone]']);
-        $this->form_validation->set_rules('customerEmail', 'Email', ['trim', 'valid_email', 'max_length[100]']);
         $this->form_validation->set_rules('customerAddress', 'Address', ['trim', 'max_length[255]']);
         $this->form_validation->set_rules('customerCnic', 'CNIC', ['trim', 'max_length[20]']);
         $this->form_validation->set_rules('creditLimit', 'Credit limit', ['required', 'trim', 'numeric', 'greater_than_equal_to[0]']);
 
         if ($this->form_validation->run() !== FALSE) {
+            $creditEnabled = $this->input->post('creditEnabled', TRUE) ? 1 : 0;
+            $creditLimit = $creditEnabled ? $this->input->post('creditLimit', TRUE) : 0;
+            
             $customerData = [
                 'name' => $this->input->post('customerName', TRUE),
                 'phone' => $this->input->post('customerPhone', TRUE),
-                'email' => $this->input->post('customerEmail', TRUE),
                 'address' => $this->input->post('customerAddress', TRUE),
                 'cnic' => $this->input->post('customerCnic', TRUE),
-                'credit_limit' => $this->input->post('creditLimit', TRUE)
+                'credit_enabled' => $creditEnabled,
+                'credit_limit' => $creditLimit
             ];
 
             $customerId = $this->customer->add($customerData);

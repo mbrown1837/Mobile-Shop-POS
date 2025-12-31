@@ -84,19 +84,13 @@ defined('BASEPATH') OR exit('');
 
                     <div class="form-group">
                         <label for="customerPhone">Phone Number <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" id="customerPhone" name="customerPhone" required>
+                        <input type="tel" class="form-control" id="customerPhone" name="customerPhone" required placeholder="03XX-XXXXXXX">
                         <span class="help-block text-danger" id="customerPhoneErr"></span>
                     </div>
 
                     <div class="form-group">
-                        <label for="customerEmail">Email</label>
-                        <input type="email" class="form-control" id="customerEmail" name="customerEmail">
-                        <span class="help-block text-danger" id="customerEmailErr"></span>
-                    </div>
-
-                    <div class="form-group">
                         <label for="customerAddress">Address</label>
-                        <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2"></textarea>
+                        <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="Shop address or area"></textarea>
                     </div>
 
                     <div class="form-group">
@@ -105,8 +99,18 @@ defined('BASEPATH') OR exit('');
                     </div>
 
                     <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="creditEnabled" name="creditEnabled" value="1">
+                                <strong>Enable Credit/Khata for this customer</strong>
+                            </label>
+                        </div>
+                        <small class="text-muted">Only enable for trusted customers</small>
+                    </div>
+
+                    <div class="form-group" id="creditLimitGroup" style="display:none;">
                         <label for="creditLimit">Credit Limit (PKR) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="creditLimit" name="creditLimit" value="0" min="0" step="1000" required>
+                        <input type="number" class="form-control" id="creditLimit" name="creditLimit" value="0" min="0" step="1000">
                         <span class="help-block text-muted">Maximum amount customer can owe</span>
                         <span class="help-block text-danger" id="creditLimitErr"></span>
                     </div>

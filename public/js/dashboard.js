@@ -1,6 +1,11 @@
 'use strict';
 
+// Hardcoded base URL to avoid any caching/extension issues
+var DASHBOARD_BASE_URL = window.location.protocol + '//' + window.location.host + '/mobile-shop-pos/';
+
 $(document).ready(function() {
+    console.log('Dashboard loaded, base URL:', DASHBOARD_BASE_URL);
+    
     checkDocumentVisibility(checkLogin);//check document visibility in order to confirm user's log in status
     
     //get earnings for current  year on page load
@@ -49,18 +54,21 @@ $(document).ready(function() {
  */
 function getEarnings(year){
     var yearToFetch = year || '';
+    // Remove trailing slash to avoid redirect
+    var url = DASHBOARD_BASE_URL + "dashboard/earningsGraph" + (yearToFetch ? "/" + yearToFetch : "");
+    console.log('Fetching earnings from:', url);
     
     $.ajax({
         type: 'GET',
-        url: appRoot+"index.php/dashboard/earningsGraph/"+yearToFetch,
+        url: url,
         dataType: "json"
-    }).done(function(data){
-        if (!data || typeof data !== 'object') {
-            console.error('Invalid earnings data received');
+    }).done(function(response){
+        // Check if session expired
+        if(response.status === 0 && response.error) {
+            console.log('Session expired, please login again');
+            $("#logInModal").modal("show");
             return;
         }
-        
-        var response = data;
 
         var barChartData = {
           labels : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"],
@@ -90,9 +98,8 @@ function getEarnings(year){
         //remove the loading info
         $("#yearAccountLoading").html("");
     }).fail(function(xhr, status, error){
-        console.error('Earnings request failed:', status, error);
-        console.log('Response:', xhr.responseText);
-    });
+        console.log('Earnings request failed:', status, error);
+        $("#yearAccountLoading").html("<span style='color:red'>Failed to load earnings</span>");
     });
 }
 
@@ -111,18 +118,22 @@ function getEarnings(year){
  */
 function loadPaymentMethodChart(year){
     var yearToGet = year ? year : "";
+    // Remove trailing slash to avoid redirect
+    var url = DASHBOARD_BASE_URL + "dashboard/paymentmethodchart" + (yearToGet ? "/" + yearToGet : "");
+    console.log('Fetching payment methods from:', url);
     
     $.ajax({
         type: 'GET',
-        url: appRoot+"index.php/dashboard/paymentmethodchart/"+yearToGet,
+        url: url,
         dataType: "json",
-        success: function(data) {
-            if (!data || typeof data !== 'object') {
-                console.error('Invalid payment method data received');
+        success: function(response) {
+            // Check if session expired
+            if(response.status === 0 && response.error) {
+                console.log('Session expired, please login again');
+                $("#logInModal").modal("show");
                 return;
             }
             
-            var response = data;
             var cash = response.cash;
             var pos = response.pos;
             var cashAndPos = response.cashAndPos;
@@ -176,8 +187,7 @@ function loadPaymentMethodChart(year){
             $("#paymentMethodYear").html(" - "+response.year);
         },
         error: function(xhr, status, error) {
-            console.error('Payment method chart failed:', status, error);
-            console.log('Response:', xhr.responseText);
+            console.log('Payment method chart request failed:', status, error);
         }
     });
 }

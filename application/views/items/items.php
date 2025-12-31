@@ -32,8 +32,17 @@ defined('BASEPATH') OR exit('');
                             <option value="other">Other</option>
                         </select>
                     </div>
+                    
+                    <div class="col-sm-2 form-group-sm form-inline">
+                        <label for="itemTypeFilter">Type</label>
+                        <select id="itemTypeFilter" class="form-control input-sm">
+                            <option value="">All</option>
+                            <option value="standard">Standard</option>
+                            <option value="serialized">Serialized</option>
+                        </select>
+                    </div>
 
-                    <div class="col-sm-3 form-group-sm form-inline">
+                    <div class="col-sm-2 form-group-sm form-inline">
                         <label for="itemsListSortBy">Sort by</label>
                         <select id="itemsListSortBy" class="form-control input-sm">
                             <option value="name-ASC">Name (A-Z)</option>
@@ -239,9 +248,9 @@ defined('BASEPATH') OR exit('');
                     
                     <div class="row">
                         <div class="col-sm-12 form-group-sm">
-                            <label for="stockUpdateDescription" class="">Description</label>
-                            <textarea class="form-control checkField" id="stockUpdateDescription" placeholder="Update Description"></textarea>
-                            <span class="help-block errMsg" id="stockUpdateDescriptionErr"></span>
+                            <label for="stockUpdateDescription">Description (Optional)</label>
+                            <textarea class="form-control" id="stockUpdateDescription" placeholder="Optional: Reason for stock update" rows="2"></textarea>
+                            <small class="text-muted">If left empty, a default description will be used</small>
                         </div>
                     </div>
                     
@@ -261,7 +270,7 @@ defined('BASEPATH') OR exit('');
 
 <!--modal to edit item-->
 <div id="editItemModal" class="modal fade" role="dialog" data-backdrop="static">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <button class="close" data-dismiss="modal">&times;</button>
@@ -271,42 +280,120 @@ defined('BASEPATH') OR exit('');
             <div class="modal-body">
                 <form role="form">
                     <div class="row">
-                        <div class="col-sm-4 form-group-sm">
-                            <label for="itemNameEdit">Item Name</label>
+                        <div class="col-sm-6 form-group-sm">
+                            <label for="itemNameEdit">Item Name <span class="text-danger">*</span></label>
                             <input type="text" id="itemNameEdit" placeholder="Item Name" autofocus class="form-control checkField">
                             <span class="help-block errMsg" id="itemNameEditErr"></span>
                         </div>
                         
+                        <div class="col-sm-6 form-group-sm">
+                            <label for="itemCodeEdit">Item Code</label>
+                            <input type="text" id="itemCodeEdit" class="form-control" readonly style="background-color:#f5f5f5;">
+                            <small class="text-muted">Cannot be changed</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-sm-4 form-group-sm">
-                            <label for="itemCode">Item Code</label>
-                            <input type="text" id="itemCodeEdit" class="form-control">
-                            <span class="help-block errMsg" id="itemCodeEditErr"></span>
+                            <label for="itemCategoryEdit">Category</label>
+                            <select id="itemCategoryEdit" class="form-control">
+                                <option value="">-- Select --</option>
+                                <option value="mobile">Mobile</option>
+                                <option value="accessory">Accessory</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
                         
                         <div class="col-sm-4 form-group-sm">
-                            <label for="unitPrice">Unit Price</label>
-                            <input type="text" id="itemPriceEdit" name="itemPrice" placeholder="Unit Price" class="form-control checkField">
+                            <label for="itemBrandEdit">Brand</label>
+                            <input type="text" id="itemBrandEdit" placeholder="Brand" class="form-control">
+                        </div>
+                        
+                        <div class="col-sm-4 form-group-sm">
+                            <label for="itemModelEdit">Model</label>
+                            <input type="text" id="itemModelEdit" placeholder="Model" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-sm-4 form-group-sm">
+                            <label for="itemPriceEdit">Selling Price <span class="text-danger">*</span></label>
+                            <input type="text" id="itemPriceEdit" name="itemPrice" placeholder="Customer Price" class="form-control checkField">
+                            <small class="text-muted">Price for customers</small>
                             <span class="help-block errMsg" id="itemPriceEditErr"></span>
+                        </div>
+                        
+                        <div class="col-sm-4 form-group-sm">
+                            <label for="itemCostPriceEdit">Cost Price (Optional)</label>
+                            <input type="text" id="itemCostPriceEdit" placeholder="Purchase Price" class="form-control">
+                            <small class="text-muted">Your purchase cost</small>
+                        </div>
+                        
+                        <div class="col-sm-4 form-group-sm">
+                            <label for="warrantyMonthsEdit">Warranty (Months)</label>
+                            <input type="number" id="warrantyMonthsEdit" placeholder="Warranty" class="form-control" min="0" max="60">
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-sm-12 form-group-sm">
-                            <label for="itemDescriptionEdit" class="">Description (Optional)</label>
-                            <textarea class="form-control" id="itemDescriptionEdit" placeholder="Optional Item Description"></textarea>
+                            <label for="itemDescriptionEdit">Description (Optional)</label>
+                            <textarea class="form-control" id="itemDescriptionEdit" rows="3" placeholder="Optional Item Description"></textarea>
                         </div>
                     </div>
+                    
+                    <!-- IMEI Management Section (only for serialized items) -->
+                    <div class="row" id="editImeiManagementSection" style="display:none;">
+                        <div class="col-sm-12">
+                            <div class="alert alert-info">
+                                <i class="fa fa-mobile"></i> <strong>IMEI Management</strong>
+                                <p class="text-muted" style="margin:5px 0 0 0;">This is a serialized item. Click below to view and manage IMEI numbers.</p>
+                                <button type="button" class="btn btn-sm btn-info view-imeis-edit" style="margin-top:10px;">
+                                    <i class="fa fa-list"></i> View/Manage IMEIs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <input type="hidden" id="itemIdEdit">
+                    <input type="hidden" id="itemTypeEdit">
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" id="editItemSubmit">Save</button>
+                <button class="btn btn-primary" id="editItemSubmit"><i class="fa fa-save"></i> Save</button>
                 <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
 </div>
 <!--end of modal-->
+
+<!--modal to confirm delete-->
+<div id="deleteItemModal" class="modal fade" role="dialog" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <button class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title text-center"><i class="fa fa-exclamation-triangle"></i> Confirm Delete</h4>
+            </div>
+            <div class="modal-body">
+                <p class="text-center" style="font-size: 16px;">
+                    Are you sure you want to delete <strong id="deleteItemName"></strong>?
+                </p>
+                <p class="text-center text-danger">
+                    <i class="fa fa-warning"></i> This action cannot be undone.
+                </p>
+                <input type="hidden" id="deleteItemId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirmDeleteBtn"><i class="fa fa-trash"></i> Yes, Delete</button>
+                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end of modal-->
+
 <script src="<?=base_url()?>public/js/items.js"></script>
 
 <?php $this->load->view('items/imei_list_modal'); ?>

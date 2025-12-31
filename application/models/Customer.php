@@ -192,13 +192,23 @@ class Customer extends CI_Model {
      * Search customers by name or phone
      * @param string $query
      * @param int $limit
+     * Search customers (only active ones for POS)
+     * @param string $query
+     * @param int $limit
+     * @param bool $activeOnly - Filter only active customers
      * @return array|bool
      */
-    public function search($query, $limit = 10) {
+    public function search($query, $limit = 10, $activeOnly = true) {
         if (empty($query)) return FALSE;
 
         $this->db->like('name', $query);
         $this->db->or_like('phone', $query);
+        
+        // Filter only active customers for POS/transactions
+        if ($activeOnly) {
+            $this->db->where('status', 'active');
+        }
+        
         $this->db->limit($limit);
 
         $result = $this->db->get('customers');

@@ -149,6 +149,9 @@ class Transaction extends CI_Model {
             'amountTendered' => $data['amountTendered'],
             'changeDue' => $data['changeDue'],
             'modeOfPayment' => $data['modeOfPayment'],
+            'payment_status' => isset($data['payment_status']) ? $data['payment_status'] : 'paid',
+            'paid_amount' => isset($data['paid_amount']) ? $data['paid_amount'] : 0,
+            'credit_amount' => isset($data['credit_amount']) ? $data['credit_amount'] : 0,
             'transType' => isset($data['transType']) ? $data['transType'] : 1,
             'staffId' => $this->session->admin_id,
             'ref' => $data['ref'],
@@ -156,19 +159,14 @@ class Transaction extends CI_Model {
             'vatPercentage' => isset($data['vatPercentage']) ? $data['vatPercentage'] : 0,
             'discount_amount' => isset($data['discount_amount']) ? $data['discount_amount'] : 0,
             'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
+            'profit_amount' => isset($data['profit_amount']) ? $data['profit_amount'] : 0,
             'cust_name' => isset($data['cust_name']) ? $data['cust_name'] : '',
             'cust_phone' => isset($data['cust_phone']) ? $data['cust_phone'] : '',
-            'cust_email' => isset($data['cust_email']) ? $data['cust_email'] : ''
+            'cust_email' => isset($data['cust_email']) ? $data['cust_email'] : '',
+            'customer_id' => isset($data['customer_id']) ? $data['customer_id'] : null,
+            'trade_in_value' => isset($data['trade_in_value']) ? $data['trade_in_value'] : 0,
+            'imei_numbers' => isset($data['imei_numbers']) ? $data['imei_numbers'] : null
         ];
-
-        // New mobile shop fields
-        if (isset($data['imei_numbers'])) $insertData['imei_numbers'] = $data['imei_numbers'];
-        if (isset($data['profit_amount'])) $insertData['profit_amount'] = $data['profit_amount'];
-        if (isset($data['payment_status'])) $insertData['payment_status'] = $data['payment_status'];
-        if (isset($data['paid_amount'])) $insertData['paid_amount'] = $data['paid_amount'];
-        if (isset($data['credit_amount'])) $insertData['credit_amount'] = $data['credit_amount'];
-        if (isset($data['customer_id'])) $insertData['customer_id'] = $data['customer_id'];
-        if (isset($data['trade_in_value'])) $insertData['trade_in_value'] = $data['trade_in_value'];
 
         // Set transaction date
         $this->db->platform() == "sqlite3" 
