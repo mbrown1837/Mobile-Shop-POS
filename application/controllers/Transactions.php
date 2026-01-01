@@ -9,6 +9,7 @@ defined('BASEPATH') or exit('');
 class Transactions extends CI_Controller
 {
   private $total_before_discount = 0, $discount_amount = 0, $vat_amount = 0, $eventual_total = 0;
+  private $customer; // Declare customer property to avoid PHP 8.2 deprecation warning
 
   public function __construct()
   {
@@ -640,43 +641,64 @@ class Transactions extends CI_Controller
         return;
       }
 
-      // Get IMEI details
-      $serialInfo = $this->item->getSerialInfo($imei);
+      // Handle multiple IMEIs (comma-separated for dual SIM)
+      $imeis = explode(',', $imei);
+      $imeis = array_map('trim', $imeis); // Trim whitespace
+      
+      // Validate all IMEIs
+      $serialInfos = [];
+      foreach ($imeis as $singleImei) {
+        $serialInfo = $this->item->getSerialInfo($singleImei);
 
-      if (!$serialInfo) {
-        $json['status'] = 0;
-        $json['msg'] = "IMEI not found";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
+        if (!$serialInfo) {
+          $json['status'] = 0;
+          $json['msg'] = "IMEI not found: {$singleImei}";
+          $this->output->set_content_type('application/json')->set_output(json_encode($json));
+          return;
+        }
+
+        if ($serialInfo->status !== 'available') {
+          $statusMsg = $serialInfo->status === 'reserved' ? 'already in cart' : $serialInfo->status;
+          $json['status'] = 0;
+          $json['msg'] = "IMEI {$singleImei} is {$statusMsg}";
+          $this->output->set_content_type('application/json')->set_output(json_encode($json));
+          return;
+        }
+        
+        $serialInfos[] = $serialInfo;
+      }
+      
+      // Lock all IMEIs
+      foreach ($imeis as $singleImei) {
+        if (!$this->item->lockSerial($singleImei)) {
+          // Release any previously locked IMEIs
+          foreach ($imeis as $releaseImei) {
+            if ($releaseImei !== $singleImei) {
+              $this->item->releaseSerial($releaseImei);
+            }
+          }
+          $json['status'] = 0;
+          $json['msg'] = "Failed to lock IMEI: {$singleImei}";
+          $this->output->set_content_type('application/json')->set_output(json_encode($json));
+          return;
+        }
       }
 
-      if ($serialInfo->status !== 'available') {
-        $json['status'] = 0;
-        $json['msg'] = "IMEI is not available (Status: {$serialInfo->status})";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
-      }
-
-      // Lock the IMEI
-      if (!$this->item->lockSerial($imei)) {
-        $json['status'] = 0;
-        $json['msg'] = "Failed to lock IMEI";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
-      }
+      // Use first IMEI's info for pricing (all should be same for one mobile)
+      $primarySerial = $serialInfos[0];
 
       // Add to cart
       $cartItemData = [
         'code' => $itemInfo->code,
         'name' => $itemInfo->name,
-        'unitPrice' => $serialInfo->selling_price ? $serialInfo->selling_price : $itemInfo->unitPrice,
+        'unitPrice' => $primarySerial->selling_price ? $primarySerial->selling_price : $itemInfo->unitPrice,
         'qty' => 1,
-        'imei' => $imei,
-        'cost_price' => $serialInfo->cost_price,
+        'imei' => $imei, // Store all IMEIs comma-separated
+        'cost_price' => $primarySerial->cost_price,
         'item_type' => 'serialized',
         'brand' => $itemInfo->brand,
         'model' => $itemInfo->model,
-        'color' => $serialInfo->color
+        'color' => $primarySerial->color
       ];
 
       $cartItemId = $this->genlib->addToCart($cartItemData);
@@ -687,8 +709,10 @@ class Transactions extends CI_Controller
         $json['cartItemId'] = $cartItemId;
         $json['cartItem'] = $cartItemData;
       } else {
-        // Release IMEI if cart add failed
-        $this->item->releaseSerial($imei);
+        // Release all IMEIs if cart add failed
+        foreach ($imeis as $singleImei) {
+          $this->item->releaseSerial($singleImei);
+        }
         $json['status'] = 0;
         $json['msg'] = "Failed to add item to cart";
       }
@@ -773,16 +797,21 @@ class Transactions extends CI_Controller
 
   /**
    * Get cart items via AJAX
+   * Supports both GET and POST methods
    */
   public function getCart()
   {
     $this->genlib->ajaxOnly();
 
     $cartItems = $this->genlib->getCartItems();
-    $discountPercentage = $this->input->post('discount', TRUE) ? $this->input->post('discount', TRUE) : 0;
-    $vatPercentage = $this->input->post('vat', TRUE) ? $this->input->post('vat', TRUE) : 0;
+    
+    // Get discount amount (not percentage) - support both GET and POST
+    $discountAmount = $this->input->post('discount_amount', TRUE) ? 
+                      floatval($this->input->post('discount_amount', TRUE)) : 
+                      ($this->input->get('discount_amount', TRUE) ? 
+                       floatval($this->input->get('discount_amount', TRUE)) : 0);
 
-    $totals = $this->genlib->calculateCartTotals($discountPercentage, $vatPercentage);
+    $totals = $this->genlib->calculateCartTotalsSimple($discountAmount);
 
     $json['status'] = 1;
     $json['cartItems'] = $cartItems;
@@ -1136,40 +1165,35 @@ class Transactions extends CI_Controller
    */
   public function processTransaction()
   {
-    $this->genlib->ajaxOnly();
+    // Enable error reporting for debugging
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    
+    try {
+      $this->genlib->ajaxOnly();
 
-    // Get cart items
-    $cartItems = $this->genlib->getCartItems();
+      // Get cart items
+      $cartItems = $this->genlib->getCartItems();
 
-    if (empty($cartItems)) {
-      $json['status'] = 0;
-      $json['msg'] = "Cart is empty";
-      $this->output->set_content_type('application/json')->set_output(json_encode($json));
-      return;
-    }
+      if (empty($cartItems)) {
+        $json['status'] = 0;
+        $json['msg'] = "Cart is empty";
+        $this->output->set_content_type('application/json')->set_output(json_encode($json));
+        return;
+      }
 
-    // Get payment details
-    $paymentMethod = $this->input->post('payment_method', TRUE);
-    $discountPercent = $this->input->post('discount_percent', TRUE) ?: 0;
-    $vatPercent = $this->input->post('vat_percent', TRUE) ?: 0;
-    $amountTendered = $this->input->post('amount_tendered', TRUE) ?: 0;
-    $customerId = $this->input->post('customer_id', TRUE);
-    $tradeInData = json_decode($this->input->post('trade_in_data', TRUE), true);
+      // Get payment details
+      $paymentMethod = $this->input->post('payment_method', TRUE);
+      $discountAmount = floatval($this->input->post('discount_amount', TRUE) ?: 0);
+      $amountTendered = floatval($this->input->post('amount_tendered', TRUE) ?: 0);
+      $customerId = $this->input->post('customer_id', TRUE);
 
-    // Calculate totals
-    $totals = $this->genlib->calculateCartTotals($discountPercent, $vatPercent);
+      // Calculate totals using simplified method
+      $totals = $this->genlib->calculateCartTotalsSimple($discountAmount);
     $grandTotal = $totals['grand_total'];
-    $discountAmount = $totals['discount_amount'];
-    $vatAmount = $totals['vat_amount'];
+    $subtotal = $totals['subtotal'];
 
-    // Apply trade-in value if present
-    $tradeInValue = 0;
-    if (!empty($tradeInData) && isset($tradeInData['value'])) {
-      $tradeInValue = $tradeInData['value'];
-      $grandTotal -= $tradeInValue;
-    }
-
-    // Determine payment status
+    // Determine payment status (Simplified: Cash or Credit only)
     $paymentStatus = 'paid';
     $paidAmount = $grandTotal;
     $creditAmount = 0;
@@ -1185,27 +1209,12 @@ class Transactions extends CI_Controller
       $paymentStatus = 'credit';
       $paidAmount = 0;
       $creditAmount = $grandTotal;
-    } elseif ($paymentMethod === 'partial') {
-      if (empty($customerId)) {
-        $json['status'] = 0;
-        $json['msg'] = "Customer is required for partial payment";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
-      }
-      $paidAmount = $this->input->post('partial_amount', TRUE) ?: 0;
-      if ($paidAmount <= 0 || $paidAmount >= $grandTotal) {
-        $json['status'] = 0;
-        $json['msg'] = "Invalid partial payment amount";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
-      }
-      $paymentStatus = 'partial';
-      $creditAmount = $grandTotal - $paidAmount;
+      $amountTendered = $grandTotal; // For credit, tendered = total
     } else {
-      // Cash or POS
+      // Cash payment
       if ($amountTendered < $grandTotal) {
         $json['status'] = 0;
-        $json['msg'] = "Amount tendered is less than total";
+        $json['msg'] = "Amount tendered (Rs. " . number_format($amountTendered, 2) . ") is less than total (Rs. " . number_format($grandTotal, 2) . ")";
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
         return;
       }
@@ -1221,17 +1230,6 @@ class Transactions extends CI_Controller
       if (!$customer) {
         $json['status'] = 0;
         $json['msg'] = "Customer not found";
-        $this->output->set_content_type('application/json')->set_output(json_encode($json));
-        return;
-      }
-    }
-
-    // Check customer credit limit if applicable
-    if ($creditAmount > 0 && !empty($customerId)) {
-      $newBalance = $customer->current_balance + $creditAmount;
-      if ($newBalance > $customer->credit_limit) {
-        $json['status'] = 0;
-        $json['msg'] = "Credit limit exceeded. Available credit: Rs. " . number_format($customer->credit_limit - $customer->current_balance, 2);
         $this->output->set_content_type('application/json')->set_output(json_encode($json));
         return;
       }
@@ -1255,19 +1253,25 @@ class Transactions extends CI_Controller
     foreach ($cartItems as $cartItemId => $item) {
       // Validate IMEI availability for serialized items
       if ($item['item_type'] === 'serialized' && !empty($item['imei'])) {
-        $serialInfo = $this->item->getSerialInfo($item['imei']);
+        // Handle multiple IMEIs (comma-separated for dual SIM)
+        $imeis = explode(',', $item['imei']);
+        $imeis = array_map('trim', $imeis);
         
-        if (!$serialInfo || !in_array($serialInfo->status, ['available', 'reserved'])) {
-          $this->db->trans_rollback();
-          $json['status'] = 0;
-          $json['msg'] = "IMEI {$item['imei']} is not available";
-          $this->output->set_content_type('application/json')->set_output(json_encode($json));
-          return;
-        }
+        foreach ($imeis as $singleImei) {
+          $serialInfo = $this->item->getSerialInfo($singleImei);
+          
+          if (!$serialInfo || !in_array($serialInfo->status, ['available', 'reserved'])) {
+            $this->db->trans_rollback();
+            $json['status'] = 0;
+            $json['msg'] = "IMEI {$singleImei} is not available";
+            $this->output->set_content_type('application/json')->set_output(json_encode($json));
+            return;
+          }
 
-        // Mark IMEI as sold
-        $this->item->markSerialSold($item['imei'], null); // Will update with transaction ID later
-        $allImeis[] = $item['imei'];
+          // Mark IMEI as sold
+          $this->item->markSerialSold($singleImei, null); // Will update with transaction ID later
+          $allImeis[] = $singleImei;
+        }
       }
 
       // Insert transaction record
@@ -1283,17 +1287,17 @@ class Transactions extends CI_Controller
         'changeDue' => $changeDue,
         'modeOfPayment' => $paymentMethod,
         'ref' => $ref,
-        'vatAmount' => $vatAmount,
-        'vatPercentage' => $vatPercent,
+        'vatAmount' => 0, // No VAT in simplified version
+        'vatPercentage' => 0,
         'discount_amount' => $discountAmount,
-        'discount_percentage' => $discountPercent,
+        'discount_percentage' => 0, // We use amount, not percentage
         'imei_numbers' => !empty($item['imei']) ? $item['imei'] : null,
         'profit_amount' => $profitAmount,
         'payment_status' => $paymentStatus,
         'paid_amount' => $paidAmount,
         'credit_amount' => $creditAmount,
         'customer_id' => $customerId,
-        'trade_in_value' => $tradeInValue,
+        'trade_in_value' => 0, // No trade-in in simplified version
         'cust_name' => '',
         'cust_phone' => '',
         'cust_email' => ''
@@ -1379,6 +1383,15 @@ class Transactions extends CI_Controller
     $json['imeis'] = $allImeis;
 
     $this->output->set_content_type('application/json')->set_output(json_encode($json));
+    
+    } catch (Exception $e) {
+      // Catch any errors and return detailed message
+      $json['status'] = 0;
+      $json['msg'] = "Error: " . $e->getMessage();
+      $json['file'] = $e->getFile();
+      $json['line'] = $e->getLine();
+      $this->output->set_content_type('application/json')->set_output(json_encode($json));
+    }
   }
 
   /**

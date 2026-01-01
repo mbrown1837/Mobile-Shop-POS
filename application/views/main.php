@@ -116,17 +116,19 @@ defined('BASEPATH') or exit('');
                             </a>
                         </li>--->
 
+            <!--- Database Management Hidden for v1.1.0
             <li class="<?= $pageTitle == 'Database' ? 'active' : '' ?>">
               <a href="<?= site_url('dbmanagement') ?>">
                 <i class="fa fa-database"></i>
                 Database Management
               </a>
             </li>
+            --->
 
-            <li class="<?= $pageTitle == 'Administrators' ? 'active' : '' ?>">
-              <a href="<?= site_url('administrators') ?>">
-                <i class="fa fa-user"></i>
-                Admin Management
+            <li class="<?= $pageTitle == 'Shop Settings' ? 'active' : '' ?>">
+              <a href="<?= site_url('settings') ?>">
+                <i class="fa fa-cog"></i>
+                Settings
               </a>
             </li>
           <?php endif; ?>
@@ -203,17 +205,19 @@ defined('BASEPATH') or exit('');
               </a>
             </li>
 
+            <!--- Database Management Hidden for v1.1.0
             <li class="<?= $pageTitle == 'Database' ? 'active' : '' ?>">
               <a href="<?= site_url('dbmanagement') ?>">
                 <i class="fa fa-database"></i>
                 Database Management
               </a>
             </li>
+            --->
 
-            <li class="<?= $pageTitle == 'Administrators' ? 'active' : '' ?>">
-              <a href="<?= site_url('administrators') ?>">
-                <i class="fa fa-user"></i>
-                Admin Management
+            <li class="<?= $pageTitle == 'Shop Settings' ? 'active' : '' ?>">
+              <a href="<?= site_url('settings') ?>">
+                <i class="fa fa-cog"></i>
+                Settings
               </a>
             </li>
           <?php endif; ?>

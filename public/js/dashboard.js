@@ -11,10 +11,6 @@ $(document).ready(function() {
     //get earnings for current  year on page load
     getEarnings();
     
-    //load payment method pie charts
-    loadPaymentMethodChart();
-    
-    
     //WHEN "YEAR" IS CHANGED IN ORDER TO CHANGE THE YEAR OF ACCOUNT BEING SHOWN
     $("#earningAndExpenseYear").change(function(){
         var year = $(this).val();
@@ -24,9 +20,6 @@ $(document).ready(function() {
             
             //get earnings for current  year on page load
             getEarnings(year);
-            
-            //also get the payment menthods for that year
-            loadPaymentMethodChart(year);
         }
     });
 });
@@ -70,29 +63,41 @@ function getEarnings(year){
             return;
         }
 
-        var barChartData = {
+        var lineChartData = {
           labels : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"],
           datasets : [{
-            fillColor : "rgba(255,255,255,1)", // bar color
-            strokeColor : "rgba(151,187,205,0.8)", //hover color
-            highlightFill : "rgba(242,245,233,1)", // highlight color
-            highlightStroke : "rgba(151,187,205,1)", // highlight hover color
+            label: "Monthly Sales",
+            fillColor : "rgba(92, 184, 92, 0.2)", // Light green fill
+            strokeColor : "rgba(92, 184, 92, 1)", // Green line
+            pointColor : "rgba(92, 184, 92, 1)", // Green points
+            pointStrokeColor : "#fff",
+            pointHighlightFill : "#fff",
+            pointHighlightStroke : "rgba(92, 184, 92, 1)",
             data : response.total_earnings
           }]
         };
 
         //show the expense title
-        document.getElementById('earningsTitle').innerHTML = "Earnings (" + response.earningsYear +")";
+        document.getElementById('earningsTitle').innerHTML = "Monthly Sales (" + response.earningsYear +")";
 
         var earningsGraph = document.getElementById("earningsGraph").getContext("2d");
 
-        window.myBar = new Chart(earningsGraph).Bar(barChartData, {
+        window.myLine = new Chart(earningsGraph).Line(lineChartData, {
           responsive : true,
-          scaleGridLineColor : "rgba(255,255,255,1)",
+          scaleGridLineColor : "rgba(255,255,255,0.1)",
           scaleShowHorizontalLines: true,
           scaleShowVerticalLines: false,
-          barStrokeWidth : 1,
-          barValueSpacing : 20
+          bezierCurve : true, // Smooth curves
+          bezierCurveTension : 0.4, // Curve smoothness
+          pointDot : true,
+          pointDotRadius : 4,
+          pointDotStrokeWidth : 2,
+          datasetStroke : true,
+          datasetStrokeWidth : 3,
+          datasetFill : true,
+          scaleOverride : false, // Let Chart.js auto-calculate scale
+          scaleStartValue : 0, // Start from 0
+          scaleBeginAtZero : true // Ensure scale begins at zero
         });
 
         //remove the loading info

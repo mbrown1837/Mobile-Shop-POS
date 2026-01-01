@@ -291,6 +291,11 @@ $(document).ready(function() {
         lilt();
     });
     
+    // Stock Status Filter Change
+    $('#stockStatusFilter').on('change', function() {
+        lilt();
+    });
+    
     // Reload items when filters change
     $('#itemsListPerPage, #itemsListSortBy').on('change', function() {
         lilt();
@@ -585,6 +590,7 @@ function lilt(url) {
     const sortBy = $('#itemsListSortBy').val() || 'name-ASC';
     const category = $('#categoryFilter').val() || '';
     const itemType = $('#itemTypeFilter').val() || '';
+    const stockStatus = $('#stockStatusFilter').val() || '';
     const searchTerm = $('#itemSearch').val().trim() || '';
     const sortParts = sortBy.split('-');
     const orderBy = sortParts[0];
@@ -599,6 +605,7 @@ function lilt(url) {
             orderFormat: orderFormat,
             category: category,
             itemType: itemType,
+            stockStatus: stockStatus,
             search: searchTerm
         },
         dataType: 'json',

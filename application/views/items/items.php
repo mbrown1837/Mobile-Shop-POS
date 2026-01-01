@@ -41,6 +41,16 @@ defined('BASEPATH') OR exit('');
                             <option value="serialized">Serialized</option>
                         </select>
                     </div>
+                    
+                    <div class="col-sm-2 form-group-sm form-inline">
+                        <label for="stockStatusFilter">Stock</label>
+                        <select id="stockStatusFilter" class="form-control input-sm">
+                            <option value="">All</option>
+                            <option value="in_stock">In Stock</option>
+                            <option value="low_stock">Low Stock</option>
+                            <option value="sold_out">Sold Out</option>
+                        </select>
+                    </div>
 
                     <div class="col-sm-2 form-group-sm form-inline">
                         <label for="itemsListSortBy">Sort by</label>

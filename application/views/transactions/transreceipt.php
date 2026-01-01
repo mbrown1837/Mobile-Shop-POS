@@ -12,7 +12,6 @@ $currencySymbol = getenv('CURRENCY_SYMBOL') ?: '&#8358;';
 <div id="transReceiptToPrint">
     <div class="row">
         <div class="col-xs-12 text-center text-uppercase">
-            <center style='margin-bottom:5px'><img src="<?=base_url()?>public/images/receipt_logo.png" alt="logo" class="img-responsive" width="60px"></center>
             <b><?=$shopName?></b>
             <div><?=$shopAddress?></div>
             <div><?=$shopPhone?></div>
@@ -89,22 +88,6 @@ $currencySymbol = getenv('CURRENCY_SYMBOL') ?: '&#8358;';
         </div>
     </div>
     <hr style='margin-top:5px; margin-bottom:0px'>
-    <div class="row margin-top-5">
-        <div class="col-xs-12">
-            <b>Customer Name: <?=$cust_name?></b>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12">
-            <b>Customer Phone: <?=$cust_phone?></b>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12">
-            <b>Customer Email: <?=$cust_email?></b>
-        </div>
-    </div>
-    <br>
     <div class="row">
         <div class="col-xs-12 text-center">Thanks for your patronage</div>
     </div>

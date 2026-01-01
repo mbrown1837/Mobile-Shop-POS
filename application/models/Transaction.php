@@ -163,7 +163,7 @@ class Transaction extends CI_Model {
             'cust_name' => isset($data['cust_name']) ? $data['cust_name'] : '',
             'cust_phone' => isset($data['cust_phone']) ? $data['cust_phone'] : '',
             'cust_email' => isset($data['cust_email']) ? $data['cust_email'] : '',
-            'customer_id' => isset($data['customer_id']) ? $data['customer_id'] : null,
+            'customer_id' => (!empty($data['customer_id'])) ? $data['customer_id'] : null, // NULL if empty
             'trade_in_value' => isset($data['trade_in_value']) ? $data['trade_in_value'] : 0,
             'imei_numbers' => isset($data['imei_numbers']) ? $data['imei_numbers'] : null
         ];

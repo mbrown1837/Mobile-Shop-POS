@@ -8,7 +8,6 @@ var baseUrl = (typeof appRoot !== 'undefined') ? appRoot : (window.location.prot
 
 $(document).ready(function() {
     let selectedCustomerId = null;
-    let tradeInData = null;
     let currentStandardItem = null;
 
     // Initialize
@@ -178,63 +177,139 @@ $(document).ready(function() {
         $.ajax({
             url: baseUrl + 'index.php/items/searchForPos',
             type: 'GET',
-            data: { search: searchTerm },
+            data: { 
+                search: searchTerm,
+                _t: new Date().getTime() // Cache buster
+            },
             dataType: 'json',
+            cache: false, // Disable caching
             beforeSend: function() {
-                $('#searchResultsBody').html('<tr><td colspan="6" class="text-center"><i class="fa fa-spinner fa-spin"></i> Searching...</td></tr>');
+                // Clear previous results
+                $('#searchResults table').html('<thead><tr><th colspan="9" class="text-center"><i class="fa fa-spinner fa-spin"></i> Searching...</th></tr></thead>');
                 $('#searchResults').removeClass('hidden');
             },
             success: function(response) {
                 if (response.status === 1 && response.items && response.items.length > 0) {
                     displaySearchResults(response.items);
                 } else {
-                    $('#searchResultsBody').html('<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>');
+                    $('#searchResults table').html('<thead><tr><th>No Results</th></tr></thead><tbody><tr><td class="text-center text-muted">No items found for "' + searchTerm + '"</td></tr></tbody>');
                 }
             },
             error: function() {
-                $('#searchResultsBody').html('<tr><td colspan="6" class="text-center text-danger">Error searching items</td></tr>');
+                $('#searchResults table').html('<thead><tr><th>Error</th></tr></thead><tbody><tr><td class="text-center text-danger">Error searching items</td></tr></tbody>');
             }
         });
     }
     
     function displaySearchResults(items) {
-        let html = '';
+        // Separate items by type
+        const serializedItems = items.filter(item => (item.item_type || 'standard') === 'serialized');
+        const standardItems = items.filter(item => (item.item_type || 'standard') === 'standard');
         
-        items.forEach(function(item) {
-            const itemType = item.item_type || 'standard';
-            const available = item.available_qty || item.quantity || 0;
-            const typeLabel = itemType === 'serialized' 
-                ? '<span class="label label-info"><i class="fa fa-mobile"></i> Serial</span>' 
-                : '<span class="label label-default"><i class="fa fa-cube"></i> Std</span>';
+        const hasSerializedItems = serializedItems.length > 0;
+        
+        // Build dynamic table header
+        let headerHtml = '<thead><tr class="active">' +
+            '<th>Item</th>' +
+            '<th>Code</th>' +
+            '<th>Type</th>' +
+            '<th>Brand</th>';
+        
+        if (hasSerializedItems) {
+            headerHtml += '<th>Color</th><th>SIM</th><th>IMEI(s)</th>';
+        }
+        
+        headerHtml += '<th>Price</th><th>Action</th></tr></thead>';
+        
+        // Build table body
+        let bodyHtml = '<tbody>';
+        
+        // Display standard items
+        standardItems.forEach(function(item) {
+            const modelInfo = item.model ? '<br><small class="text-muted">' + item.model + '</small>' : '';
             
-            const brandInfo = item.brand ? '<br><small class="text-muted">' + item.brand + (item.model ? ' ' + item.model : '') + '</small>' : '';
-            const badgeClass = available <= 10 ? 'badge-danger' : 'badge-success';
+            bodyHtml += '<tr>' +
+                '<td><strong>' + item.name + '</strong>' + modelInfo + '</td>' +
+                '<td><code>' + item.code + '</code></td>' +
+                '<td><span class="label label-default"><i class="fa fa-cube"></i> Std</span></td>' +
+                '<td>' + (item.brand || '-') + '</td>';
             
-            let actionButton = '';
-            if (itemType === 'serialized') {
-                actionButton = '<button class="btn btn-xs btn-primary select-mobile-btn" data-item-id="' + item.id + '" data-item-code="' + item.code + '" data-item-name="' + item.name + '" data-item-price="' + item.unitPrice + '">' +
-                    '<i class="fa fa-mobile"></i> Select Unit</button>';
-            } else {
-                actionButton = '<button class="btn btn-xs btn-success add-standard-btn" ' +
-                    'data-item-code="' + item.code + '" ' +
-                    'data-item-name="' + item.name + '" ' +
-                    'data-item-price="' + item.unitPrice + '" ' +
-                    'data-item-qty="' + available + '">' +
-                    '<i class="fa fa-plus"></i> Add</button>';
+            if (hasSerializedItems) {
+                bodyHtml += '<td colspan="3" class="text-center text-muted">-</td>';
             }
             
-            html += '<tr>' +
-                '<td><strong>' + item.name + '</strong>' + brandInfo + '</td>' +
-                '<td><code>' + item.code + '</code></td>' +
-                '<td>' + typeLabel + '</td>' +
-                '<td><span class="currency">Rs. ' + parseFloat(item.unitPrice).toFixed(2) + '</span></td>' +
-                '<td><span class="badge ' + badgeClass + '">' + available + '</span></td>' +
-                '<td>' + actionButton + '</td>' +
+            bodyHtml += '<td>Rs. ' + parseFloat(item.unitPrice).toFixed(2) + '</td>' +
+                '<td><button class="btn btn-xs btn-success add-standard-btn" ' +
+                'data-item-code="' + item.code + '" ' +
+                'data-item-name="' + item.name + '" ' +
+                'data-item-price="' + item.unitPrice + '" ' +
+                'data-item-qty="' + item.quantity + '">' +
+                '<i class="fa fa-plus"></i> Add</button></td>' +
                 '</tr>';
         });
         
-        $('#searchResultsBody').html(html);
+        // Display serialized items with full details
+        if (hasSerializedItems) {
+            serializedItems.forEach(function(item) {
+                $.ajax({
+                    url: baseUrl + 'index.php/items/getAvailableMobileUnits',
+                    type: 'GET',
+                    data: { item_id: item.id },
+                    dataType: 'json',
+                    async: false,
+                    success: function(response) {
+                        if (response.status === 1 && response.units && response.units.length > 0) {
+                            response.units.forEach(function(unit) {
+                                const imeiCount = unit.imeis.length;
+                                const imeiDisplay = unit.imeis.map(function(imei) {
+                                    return '<code style="font-size: 11px;">' + imei + '</code>';
+                                }).join('<br>');
+                                
+                                const simBadge = imeiCount > 1 ? 
+                                    '<span class="label label-success">Dual</span>' : 
+                                    '<span class="label label-default">Single</span>';
+                                
+                                const modelInfo = item.model ? '<br><small class="text-muted">' + item.model + '</small>' : '';
+                                
+                                bodyHtml += '<tr>' +
+                                    '<td><strong>' + item.name + '</strong>' + modelInfo + '</td>' +
+                                    '<td><code>' + item.code + '</code></td>' +
+                                    '<td><span class="label label-info"><i class="fa fa-mobile"></i> Serial</span></td>' +
+                                    '<td>' + (item.brand || '-') + '</td>' +
+                                    '<td>' + (unit.color || '-') + '</td>' +
+                                    '<td>' + simBadge + '</td>' +
+                                    '<td style="max-width: 150px;">' + imeiDisplay + '</td>' +
+                                    '<td>Rs. ' + parseFloat(item.unitPrice).toFixed(2) + '</td>' +
+                                    '<td><button class="btn btn-xs btn-success add-mobile-direct-btn" ' +
+                                    'data-item-code="' + item.code + '" ' +
+                                    'data-imeis=\'' + JSON.stringify(unit.imeis) + '\'>' +
+                                    '<i class="fa fa-shopping-cart"></i> Add</button></td>' +
+                                    '</tr>';
+                            });
+                        }
+                    }
+                });
+            });
+        }
+        
+        bodyHtml += '</tbody>';
+        
+        // Replace entire table content
+        $('#searchResults table').html(headerHtml + bodyHtml);
     }
+    
+    // Handle direct mobile add to cart
+    $(document).on('click', '.add-mobile-direct-btn', function(e) {
+        e.preventDefault();
+        const itemCode = $(this).data('item-code');
+        const imeis = JSON.parse($(this).attr('data-imeis'));
+        
+        // Add to cart with all IMEIs
+        addItemToCart(itemCode, imeis.join(','));
+        
+        $('#unifiedSearch').val('').focus();
+        $('#searchResults').addClass('hidden');
+    });
     
     // Handle Add Standard Item from search results
     $(document).on('click', '.add-standard-btn', function() {
@@ -243,35 +318,40 @@ $(document).ready(function() {
         const itemPrice = $(this).data('item-price');
         const itemQty = $(this).data('item-qty');
         
-        currentStandardItem = {
-            code: itemCode,
-            name: itemName,
-            unitPrice: itemPrice,
-            quantity: itemQty
-        };
-        
-        $('#foundItemName').text(itemName);
-        $('#foundItemCode').text(itemCode);
-        $('#foundItemPrice').text('Rs. ' + parseFloat(itemPrice).toFixed(2));
-        $('#foundItemQty').text(itemQty);
-        $('#standardItemSection').removeClass('hidden');
-        $('#standardItemQty').val(1).focus();
-        $('#searchResults').addClass('hidden');
-        $('#unifiedSearch').val('');
+        // If only 1 quantity available, add directly to cart
+        if (itemQty == 1) {
+            addItemToCart(itemCode, null, 1);
+            $('#unifiedSearch').val('').focus();
+            $('#searchResults').addClass('hidden');
+        } else {
+            // Show quantity selection section
+            currentStandardItem = {
+                code: itemCode,
+                name: itemName,
+                unitPrice: itemPrice,
+                quantity: itemQty
+            };
+            
+            $('#foundItemName').text(itemName);
+            $('#foundItemCode').text(itemCode);
+            $('#foundItemPrice').text('Rs. ' + parseFloat(itemPrice).toFixed(2));
+            $('#foundItemQty').text(itemQty);
+            $('#standardItemSection').removeClass('hidden');
+            $('#standardItemQty').val(1).attr('max', itemQty).focus();
+            $('#searchResults').addClass('hidden');
+            $('#unifiedSearch').val('');
+        }
     });
     
-    // Handle Select Mobile Unit (for serialized items)
-    $(document).on('click', '.select-mobile-btn', function() {
+    // Handle Add Mobile (for serialized items) - Show mobile details inline
+    $(document).on('click', '.add-mobile-btn', function() {
         const itemId = $(this).data('item-id');
         const itemCode = $(this).data('item-code');
         const itemName = $(this).data('item-name');
         const itemPrice = $(this).data('item-price');
+        const itemBrand = $(this).data('item-brand');
         
-        showMobileUnitSelectionModal(itemId, itemCode, itemName, itemPrice);
-    });
-    
-    function showMobileUnitSelectionModal(itemId, itemCode, itemName, itemPrice) {
-        // Load available mobile units
+        // Load available mobiles and show inline
         $.ajax({
             url: baseUrl + 'index.php/items/getAvailableMobileUnits',
             type: 'GET',
@@ -279,78 +359,63 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.status === 1 && response.units && response.units.length > 0) {
-                    let html = '<div class="modal fade" id="mobileUnitModal" tabindex="-1">' +
-                        '<div class="modal-dialog modal-lg">' +
-                        '<div class="modal-content">' +
-                        '<div class="modal-header">' +
-                        '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                        '<h4 class="modal-title"><i class="fa fa-mobile"></i> Select Mobile - ' + itemName + '</h4>' +
-                        '<p class="text-muted">Price: <span class="currency">Rs. ' + parseFloat(itemPrice).toFixed(2) + '</span> | Available: ' + response.units.length + ' units</p>' +
+                    // Show mobile selection section with simple list
+                    let html = '<div class="panel panel-success">' +
+                        '<div class="panel-heading">' +
+                        '<strong>' + itemName + '</strong> - ' + itemBrand + ' - Rs. ' + parseFloat(itemPrice).toFixed(2) +
                         '</div>' +
-                        '<div class="modal-body" style="max-height: 500px; overflow-y: auto;">' +
-                        '<div class="row">';
+                        '<div class="panel-body"><div class="row">';
                     
-                    response.units.forEach(function(unit, index) {
+                    response.units.forEach(function(unit) {
                         const imeiCount = unit.imeis.length;
-                        const imeiDisplay = unit.imeis.map(function(imei) {
-                            return '<code>' + imei + '</code>';
-                        }).join('<br>');
+                        const imeiList = unit.imeis.map(function(imei) {
+                            return '<div><code>' + imei + '</code></div>';
+                        }).join('');
                         
-                        const simType = imeiCount > 1 ? '<span class="label label-success">Dual SIM</span>' : '<span class="label label-default">Single SIM</span>';
-                        const colorBadge = unit.color ? '<span class="label label-primary">' + unit.color + '</span>' : '<span class="label label-default">No Color</span>';
-                        const costInfo = unit.cost_price ? '<br><small><strong>Cost:</strong> Rs. ' + parseFloat(unit.cost_price).toFixed(2) + '</small>' : '';
+                        const simBadge = imeiCount > 1 ? 
+                            '<span class="label label-success">Dual SIM</span>' : 
+                            '<span class="label label-default">Single SIM</span>';
                         
-                        html += '<div class="col-sm-6" style="margin-bottom: 15px;">' +
-                            '<div class="panel panel-default" style="cursor: pointer; transition: all 0.2s;" ' +
-                            'onmouseover="this.style.boxShadow=\'0 4px 8px rgba(0,0,0,0.2)\'" ' +
-                            'onmouseout="this.style.boxShadow=\'none\'">' +
-                            '<div class="panel-body select-unit-item" ' +
-                            'data-unit-index="' + index + '" ' +
+                        const color = unit.color || 'N/A';
+                        const cost = unit.cost_price ? '<small class="text-muted">Cost: Rs. ' + parseFloat(unit.cost_price).toFixed(2) + '</small>' : '';
+                        
+                        html += '<div class="col-sm-6" style="margin-bottom: 10px;">' +
+                            '<div class="well well-sm">' +
+                            '<div><strong>Color:</strong> ' + color + ' ' + simBadge + '</div>' +
+                            '<div style="margin: 8px 0;"><strong>IMEI(s):</strong><br>' + imeiList + '</div>' +
+                            (cost ? '<div>' + cost + '</div>' : '') +
+                            '<button class="btn btn-success btn-sm btn-block select-mobile-unit" style="margin-top: 8px;" ' +
                             'data-item-code="' + itemCode + '" ' +
                             'data-imeis=\'' + JSON.stringify(unit.imeis) + '\'>' +
-                            '<h4><i class="fa fa-mobile"></i> Unit #' + (index + 1) + ' ' + colorBadge + ' ' + simType + '</h4>' +
-                            '<p><strong>IMEI' + (imeiCount > 1 ? 's' : '') + ':</strong><br>' + imeiDisplay + costInfo + '</p>' +
-                            '<button class="btn btn-success btn-sm btn-block">' +
-                            '<i class="fa fa-shopping-cart"></i> Add to Cart' +
-                            '</button>' +
-                            '</div></div></div>';
+                            '<i class="fa fa-shopping-cart"></i> Add to Cart</button>' +
+                            '</div></div>';
                     });
                     
-                    html += '</div></div>' +
-                        '<div class="modal-footer">' +
-                        '<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
-                        '</div>' +
-                        '</div></div></div>';
+                    html += '</div></div></div>';
                     
-                    // Remove existing modal if any
-                    $('#mobileUnitModal').remove();
-                    
-                    // Add and show modal
-                    $('body').append(html);
-                    $('#mobileUnitModal').modal('show');
+                    $('#mobileSelectionSection').html(html).removeClass('hidden');
+                    $('#searchResults').addClass('hidden');
                 } else {
-                    showError('No available units for this item');
+                    showError('No available mobiles');
                 }
             },
             error: function() {
-                showError('Error loading mobile units');
+                showError('Error loading mobiles');
             }
         });
-    }
+    });
     
-    // Handle Mobile Unit selection
-    $(document).on('click', '.select-unit-item', function(e) {
+    // Handle mobile selection - add to cart
+    $(document).on('click', '.select-mobile-unit', function(e) {
         e.preventDefault();
         const itemCode = $(this).data('item-code');
         const imeis = JSON.parse($(this).attr('data-imeis'));
         
-        $('#mobileUnitModal').modal('hide');
-        
         // Add to cart with all IMEIs
         addItemToCart(itemCode, imeis.join(','));
         
+        $('#mobileSelectionSection').addClass('hidden').html('');
         $('#unifiedSearch').val('').focus();
-        $('#searchResults').addClass('hidden');
     });
 
     // Add standard item to cart
@@ -399,15 +464,13 @@ $(document).ready(function() {
     }
 
     function refreshCart() {
-        const discount = parseFloat($('#discountPercent').val()) || 0;
-        const vat = parseFloat($('#vatPercent').val()) || 0;
+        const discountAmount = parseFloat($('#discountAmount').val()) || 0;
 
         $.ajax({
             url: baseUrl + 'index.php/transactions/getCart',
             type: 'POST',
             data: { 
-                discount: discount,
-                vat: vat
+                discount_amount: discountAmount
             },
             dataType: 'json',
             success: function(response) {
@@ -447,7 +510,7 @@ $(document).ready(function() {
         if (Object.keys(cartItems).length === 0) {
             container.html('<p class="text-center text-muted">Cart is empty. Scan an IMEI or item code to add items.</p>');
             $('#cartItemCount').text('0');
-            updateTotals({ subtotal: 0, discount_amount: 0, after_discount: 0, vat_amount: 0, grand_total: 0 });
+            updateTotals({ subtotal: 0, discount_amount: 0, grand_total: 0 });
             return;
         }
 
@@ -494,10 +557,18 @@ $(document).ready(function() {
 
     function updateTotals(totals) {
         $('#subtotalAmount').text('Rs. ' + parseFloat(totals.subtotal).toFixed(2));
-        $('#discountAmount').text('Rs. ' + parseFloat(totals.discount_amount).toFixed(2));
-        $('#afterDiscountAmount').text('Rs. ' + parseFloat(totals.after_discount).toFixed(2));
-        $('#vatAmount').text('Rs. ' + parseFloat(totals.vat_amount).toFixed(2));
+        $('#discountDisplay').text('Rs. ' + parseFloat(totals.discount_amount).toFixed(2));
         $('#grandTotalAmount').text('Rs. ' + parseFloat(totals.grand_total).toFixed(2));
+        
+        // Auto-update Amount Tendered if Cash payment is selected
+        const paymentMethod = $('#paymentMethod').val();
+        if (paymentMethod === 'cash') {
+            $('#amountTendered').val(parseFloat(totals.grand_total).toFixed(2));
+            // Update change due
+            const tendered = parseFloat($('#amountTendered').val()) || 0;
+            const change = tendered - parseFloat(totals.grand_total);
+            $('#changeDue').text('Rs. ' + change.toFixed(2));
+        }
     }
 
     // Remove item from cart
@@ -578,42 +649,58 @@ $(document).ready(function() {
     });
 
     // ========================================
-    // Discount and VAT
+    // Discount input
     // ========================================
-    $('#discountPercent, #vatPercent').on('input', function() {
+    $('#discountAmount').on('input', function() {
+        // Remove leading zeros
+        let value = $(this).val();
+        if (value && value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+            value = value.replace(/^0+/, '');
+            $(this).val(value);
+        }
         refreshCart();
     });
 
     // ========================================
-    // Payment Method
+    // Payment Method - Simplified (Cash or Credit only)
+    // ========================================
+    // Payment Method - Simplified (Cash or Credit only)
     // ========================================
     $('#paymentMethod').on('change', function() {
         const method = $(this).val();
         
-        // Hide all payment sections
-        $('#fullPaymentSection, #partialPaymentSection').addClass('hidden');
+        // Hide all sections first
+        $('#cashPaymentSection, #creditPaymentSection, #customerPanel').hide();
 
-        if (method === 'cash' || method === 'pos') {
-            $('#fullPaymentSection').removeClass('hidden');
-            $('#amountTendered').focus();
-        } else if (method === 'partial') {
-            if (!selectedCustomerId) {
-                showError('Please select a customer for partial payment');
-                $(this).val('');
-                return;
-            }
-            $('#partialPaymentSection').removeClass('hidden');
-            $('#partialAmount').focus();
+        if (method === 'cash') {
+            // Show cash payment section
+            $('#cashPaymentSection').removeClass('hidden').show();
+            const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
+            $('#amountTendered').val(grandTotal.toFixed(2)); // Auto-fill with exact amount (removed .focus())
+            
+            // Hide customer panel for cash
+            $('#customerPanel').hide();
+            selectedCustomerId = null;
+            $('#customerSelect').val(null).trigger('change');
+            $('#customerInfoSection').addClass('hidden');
         } else if (method === 'credit') {
-            if (!selectedCustomerId) {
-                showError('Please select a customer for credit sale');
-                $(this).val('');
-                return;
-            }
+            // Show credit payment section and customer panel
+            $('#creditPaymentSection').removeClass('hidden').show();
+            $('#customerPanel').show();
+            
+            // Focus on customer select
+            setTimeout(function() {
+                $('#customerSelect').select2('open');
+            }, 100);
         }
     });
 
-    // Calculate change due
+    // Trigger change on page load to show cash by default
+    $(document).ready(function() {
+        $('#paymentMethod').trigger('change');
+    });
+
+    // Calculate change due for cash payment
     $('#amountTendered').on('input', function() {
         const tendered = parseFloat($(this).val()) || 0;
         const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
@@ -638,155 +725,73 @@ $(document).ready(function() {
     // For now, placeholder functionality
 
     // ========================================
-    // Trade-In
     // ========================================
-    $('#addTradeInBtn').on('click', function() {
-        $('#tradeInModal').modal('show');
-    });
-
-    $('#saveTradeInBtn').on('click', function() {
-        const brand = $('#tradeInBrand').val().trim();
-        const model = $('#tradeInModel').val().trim();
-        const imei = $('#tradeInImei').val().trim();
-        const condition = $('#tradeInCondition').val();
-        const value = parseFloat($('#tradeInValue').val()) || 0;
-        const storage = $('#tradeInStorage').val().trim();
-        const color = $('#tradeInColor').val().trim();
-        const notes = $('#tradeInNotes').val().trim();
-
-        // Validation
-        if (!brand) {
-            showError('Please enter brand');
-            return;
-        }
-        if (!model) {
-            showError('Please enter model');
-            return;
-        }
-        if (!condition) {
-            showError('Please select condition');
-            return;
-        }
-        if (value <= 0) {
-            showError('Please enter a valid trade-in value');
-            return;
-        }
-
-        // Validate IMEI if provided
-        if (imei && !(/^\d{15}$/.test(imei))) {
-            showError('IMEI must be exactly 15 digits');
-            return;
-        }
-
-        // Check if trade-in value exceeds grand total
-        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('₨ ', '').replace(',', '')) || 0;
-        if (value > grandTotal) {
-            showError('Trade-in value cannot exceed transaction total');
-            return;
-        }
-
-        // Store trade-in data
-        tradeInData = {
-            brand: brand,
-            model: model,
-            imei: imei,
-            condition: condition,
-            value: value,
-            storage: storage,
-            color: color,
-            notes: notes
-        };
-
-        // Display trade-in info
-        $('#tradeInValue').text('₨ ' + value.toFixed(2));
-        $('#tradeInInfo').removeClass('hidden');
-
-        // Close modal and reset form
-        $('#tradeInModal').modal('hide');
-        $('#tradeInForm')[0].reset();
-
-        showSuccess('Trade-in added successfully');
-    });
-
-    $('#removeTradeInBtn').on('click', function() {
-        if (confirm('Are you sure you want to remove the trade-in?')) {
-            tradeInData = null;
-            $('#tradeInInfo').addClass('hidden');
-            showSuccess('Trade-in removed');
-        }
-    });
-
-    // ========================================
-    // Complete Transaction
+    // Complete Transaction - Simplified (Cash or Credit only)
     // ========================================
     $('#completeTransactionBtn').on('click', function() {
         // Check if cart has items
         const cartItems = getCartItems();
         if (!cartItems || cartItems.length === 0) {
-            showError('Cart is empty. Please add items first.');
+            showNotification('error', 'Cart is empty. Please add items first.');
             return;
         }
 
         const paymentMethod = $('#paymentMethod').val();
         
         if (!paymentMethod) {
-            showError('Please select a payment method');
+            showNotification('error', 'Please select payment method (Cash or Credit)');
             return;
         }
 
-        const discountPercent = parseFloat($('#discountPercent').val()) || 0;
-        const vatPercent = parseFloat($('#vatPercent').val()) || 0;
-        const grandTotal = parseFloat($('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '')) || 0;
+        const discountAmount = parseFloat($('#discountAmount').val()) || 0;
+        const grandTotalText = $('#grandTotalAmount').text().replace('Rs. ', '').replace(/,/g, '').trim();
+        const grandTotal = parseFloat(grandTotalText) || 0;
+
+        // Debug logging
+        console.log('Grand Total Text:', grandTotalText);
+        console.log('Grand Total Parsed:', grandTotal);
 
         let amountTendered = 0;
-        let partialAmount = 0;
 
         // Validate based on payment method
-        if (paymentMethod === 'cash' || paymentMethod === 'pos') {
-            amountTendered = parseFloat($('#amountTendered').val()) || 0;
+        if (paymentMethod === 'cash') {
+            const tenderedInput = $('#amountTendered').val().trim();
+            amountTendered = parseFloat(tenderedInput) || 0;
             
-            if (amountTendered < grandTotal) {
-                showError('Amount tendered is less than grand total');
-                return;
-            }
-        }
-
-        if (paymentMethod === 'partial') {
-            if (!selectedCustomerId) {
-                showError('Please select a customer for partial payment');
-                return;
-            }
+            // Debug logging
+            console.log('Amount Tendered Input:', tenderedInput);
+            console.log('Amount Tendered Parsed:', amountTendered);
             
-            partialAmount = parseFloat($('#partialAmount').val()) || 0;
+            // Round to 2 decimal places for comparison
+            const roundedTendered = Math.round(amountTendered * 100) / 100;
+            const roundedTotal = Math.round(grandTotal * 100) / 100;
             
-            if (partialAmount <= 0) {
-                showError('Please enter amount paid');
-                return;
-            }
-
-            if (partialAmount >= grandTotal) {
-                showError('Partial amount must be less than total. Use full payment instead.');
+            console.log('Rounded Tendered:', roundedTendered);
+            console.log('Rounded Total:', roundedTotal);
+            console.log('Comparison:', roundedTendered, '<', roundedTotal, '=', roundedTendered < roundedTotal);
+            
+            if (roundedTendered < roundedTotal) {
+                showNotification('error', 'Amount tendered (Rs. ' + roundedTendered.toFixed(2) + ') is less than total (Rs. ' + roundedTotal.toFixed(2) + ')');
+                $('#amountTendered').focus();
                 return;
             }
         }
 
         if (paymentMethod === 'credit') {
             if (!selectedCustomerId) {
-                showError('Please select a customer for credit sale');
+                showNotification('error', 'Please select a customer for credit/khata sale');
                 return;
             }
+            amountTendered = grandTotal; // For credit, amount tendered = total
         }
 
         // Prepare transaction data
         const transactionData = {
             cart_items: JSON.stringify(cartItems),
             payment_method: paymentMethod,
-            discount_percent: discountPercent,
-            vat_percent: vatPercent,
+            discount_amount: discountAmount,
             amount_tendered: amountTendered,
-            partial_amount: partialAmount,
-            customer_id: selectedCustomerId,
-            trade_in_data: tradeInData ? JSON.stringify(tradeInData) : null
+            customer_id: selectedCustomerId || null
         };
 
         // Process transaction
@@ -803,17 +808,32 @@ $(document).ready(function() {
                     // Reset form first
                     resetPOS();
                     
+                    // Show success message
+                    showNotification('success', 'Sale completed successfully!');
+                    
                     // Reload transaction list
                     loadTransactionList();
                     
                     // Show success modal with receipt option
                     showTransactionSuccess(response.ref, response.grand_total);
                 } else {
-                    showError(response.msg);
+                    showNotification('error', response.msg);
                 }
             },
             error: function(xhr, status, error) {
-                showError('Error processing transaction: ' + error);
+                console.log('XHR Response:', xhr.responseText);
+                console.log('Status:', status);
+                console.log('Error:', error);
+                
+                // Try to parse JSON response
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showNotification('error', response.msg || 'Transaction failed');
+                    console.log('Error details:', response);
+                } catch(e) {
+                    showNotification('error', 'Transaction failed: ' + error);
+                    console.log('Raw error:', xhr.responseText);
+                }
             },
             complete: function() {
                 $('#completeTransactionBtn').prop('disabled', false).html('<i class="fa fa-check"></i> Complete Transaction');
@@ -823,25 +843,26 @@ $(document).ready(function() {
 
     function resetPOS() {
         // Clear search fields
-        $('#imeiSearch, #itemCodeSearch').val('');
+        $('#unifiedSearch').val('');
+        $('#searchResults').addClass('hidden');
         $('#standardItemSection').addClass('hidden');
         currentStandardItem = null;
         
         // Reset payment fields
-        $('#paymentMethod').val('');
-        $('#discountPercent, #vatPercent').val(0);
-        $('#amountTendered, #partialAmount').val('');
-        $('#changeDue, #creditAmount').text('₨ 0.00');
-        $('#fullPaymentSection, #partialPaymentSection').addClass('hidden');
+        $('#paymentMethod').val('cash'); // Set to cash by default
+        $('#discountAmount').val(''); // Empty, not 0
+        $('#amountTendered').val('');
+        $('#changeDue').text('Rs. 0.00');
+        $('#cashPaymentSection, #creditPaymentSection').addClass('hidden');
         
         // Reset customer
         selectedCustomerId = null;
-        $('#customerSelect').val('');
+        $('#customerSelect').val(null).trigger('change');
         $('#customerInfoSection').addClass('hidden');
+        $('#customerPanel').hide();
         
-        // Reset trade-in
-        tradeInData = null;
-        $('#tradeInInfo').addClass('hidden');
+        // Trigger payment method change to show cash section
+        $('#paymentMethod').trigger('change');
         
         // Refresh cart (should be empty now)
         refreshCart();
@@ -907,38 +928,34 @@ $(document).ready(function() {
     // ========================================
     // Helper Functions
     // ========================================
-    function showError(message) {
+    function showNotification(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        const title = type === 'success' ? 'Success!' : 'Error!';
+        const duration = type === 'success' ? 3000 : 5000;
+        
         // Create toast notification
-        const toast = $('<div class="alert alert-danger alert-dismissible" style="position: fixed; top: 70px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
+        const toast = $('<div class="alert ' + alertClass + ' alert-dismissible" style="position: fixed; top: 70px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
             '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
-            '<strong><i class="fa fa-exclamation-circle"></i> Error!</strong> ' + message +
+            '<strong><i class="fa ' + icon + '"></i> ' + title + '</strong> ' + message +
             '</div>');
         
         $('body').append(toast);
         
-        // Auto-remove after 5 seconds
+        // Auto-remove after duration
         setTimeout(function() {
             toast.fadeOut(function() {
                 $(this).remove();
             });
-        }, 5000);
+        }, duration);
+    }
+
+    function showError(message) {
+        showNotification('error', message);
     }
 
     function showSuccess(message) {
-        // Create toast notification
-        const toast = $('<div class="alert alert-success alert-dismissible" style="position: fixed; top: 70px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">' +
-            '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
-            '<strong><i class="fa fa-check-circle"></i> Success!</strong> ' + message +
-            '</div>');
-        
-        $('body').append(toast);
-        
-        // Auto-remove after 3 seconds
-        setTimeout(function() {
-            toast.fadeOut(function() {
-                $(this).remove();
-            });
-        }, 3000);
+        showNotification('success', message);
     }
 
     function showTransactionSuccess(ref, total) {

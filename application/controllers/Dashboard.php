@@ -52,6 +52,32 @@ class Dashboard extends CI_Controller
     $data['transByDays'] = $this->analytic->getTransByDays();
     $data['transByMonths'] = $this->analytic->getTransByMonths();
     $data['transByYears'] = $this->analytic->getTransByYears();
+    
+    // New metrics for v1.1.0
+    // Today's total sales amount
+    $todaySales = $this->db->select('SUM(totalMoneySpent) as total')
+                           ->where('DATE(transDate)', date('Y-m-d'))
+                           ->get('transactions')->row();
+    $data['totalEarnedToday'] = $todaySales->total ?? 0;
+    
+    // Today's profit
+    $todayProfit = $this->db->select('SUM(profit_amount) as total')
+                            ->where('DATE(transDate)', date('Y-m-d'))
+                            ->get('transactions')->row();
+    $data['totalProfitToday'] = $todayProfit->total ?? 0;
+    
+    // Outstanding khata
+    $khata = $this->db->select('SUM(current_balance) as total, COUNT(*) as count')
+                      ->where('current_balance >', 0)
+                      ->get('customers')->row();
+    $data['totalKhataOutstanding'] = $khata->total ?? 0;
+    $data['customersWithBalance'] = $khata->count ?? 0;
+    
+    // Low stock items (less than 10)
+    $lowStock = $this->db->where('quantity <', 10)
+                         ->where('item_type', 'standard')
+                         ->count_all_results('items');
+    $data['lowStockItems'] = $lowStock;
 
     $values['pageContent'] = $this->load->view('dashboard', $data, TRUE);
 

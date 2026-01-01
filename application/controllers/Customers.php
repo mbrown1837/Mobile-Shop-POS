@@ -68,26 +68,22 @@ class Customers extends CI_Controller {
         $this->form_validation->set_rules('customerPhone', 'Phone number', ['required', 'trim', 'max_length[20]', 'is_unique[customers.phone]']);
         $this->form_validation->set_rules('customerAddress', 'Address', ['trim', 'max_length[255]']);
         $this->form_validation->set_rules('customerCnic', 'CNIC', ['trim', 'max_length[20]']);
-        $this->form_validation->set_rules('creditLimit', 'Credit limit', ['required', 'trim', 'numeric', 'greater_than_equal_to[0]']);
+        $this->form_validation->set_rules('customerNotes', 'Notes', ['trim']);
 
         if ($this->form_validation->run() !== FALSE) {
-            $creditEnabled = $this->input->post('creditEnabled', TRUE) ? 1 : 0;
-            $creditLimit = $creditEnabled ? $this->input->post('creditLimit', TRUE) : 0;
-            
             $customerData = [
                 'name' => $this->input->post('customerName', TRUE),
                 'phone' => $this->input->post('customerPhone', TRUE),
                 'address' => $this->input->post('customerAddress', TRUE),
                 'cnic' => $this->input->post('customerCnic', TRUE),
-                'credit_enabled' => $creditEnabled,
-                'credit_limit' => $creditLimit
+                'notes' => $this->input->post('customerNotes', TRUE)
             ];
 
             $customerId = $this->customer->add($customerData);
 
             if ($customerId) {
                 $json['status'] = 1;
-                $json['msg'] = "Customer added successfully";
+                $json['msg'] = "Customer added successfully - Unlimited khata available";
                 $json['customer_id'] = $customerId;
 
                 // Add event log

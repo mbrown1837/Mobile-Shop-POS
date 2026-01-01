@@ -279,6 +279,37 @@ class Genlib
   }
 
   /**
+   * Calculate cart totals - Simplified (v1.1.0)
+   * Only discount amount, no percentage or VAT
+   * @param float $discountAmount
+   * @return array
+   */
+  public function calculateCartTotalsSimple($discountAmount = 0)
+  {
+    $this->initCart();
+
+    $subtotal = 0;
+    foreach ($_SESSION['pos_cart']['items'] as $item) {
+      $subtotal += $item['totalPrice'];
+    }
+
+    // Simple calculation: Subtotal - Discount = Grand Total
+    $grandTotal = $subtotal - $discountAmount;
+    
+    // Ensure grand total is not negative
+    if ($grandTotal < 0) {
+      $grandTotal = 0;
+    }
+
+    return [
+      'subtotal' => round($subtotal, 2),
+      'discount_amount' => round($discountAmount, 2),
+      'grand_total' => round($grandTotal, 2),
+      'item_count' => count($_SESSION['pos_cart']['items'])
+    ];
+  }
+
+  /**
    * Check cart timeout and release locked IMEIs if expired
    * @return bool
    */

@@ -12,25 +12,47 @@ defined('BASEPATH') OR exit('');
 
     <!-- Report Cards -->
     <div class="row">
-        <!-- Profit Reports -->
+        <!-- Sales Reports -->
         <div class="col-sm-6 col-md-4">
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <i class="fa fa-line-chart"></i> Profit Reports
+                        <i class="fa fa-line-chart"></i> Sales Reports
                     </h4>
                 </div>
                 <div class="panel-body">
-                    <p>View daily, monthly, and custom date range profit reports.</p>
+                    <p>Daily, monthly sales with profit analysis.</p>
                     <div class="btn-group-vertical btn-block">
-                        <a href="<?=site_url('reports/profitDaily')?>" class="btn btn-default">
-                            <i class="fa fa-calendar-o"></i> Daily Profit
+                        <a href="<?=site_url('reports_enhanced/salesSummary?type=daily')?>" class="btn btn-primary">
+                            <i class="fa fa-calendar-o"></i> Daily Sales Report
                         </a>
-                        <a href="<?=site_url('reports/profitMonthly')?>" class="btn btn-default">
-                            <i class="fa fa-calendar"></i> Monthly Profit
+                        <a href="<?=site_url('reports_enhanced/salesSummary?type=monthly')?>" class="btn btn-primary">
+                            <i class="fa fa-calendar"></i> Monthly Sales Report
                         </a>
-                        <a href="<?=site_url('reports/profitRange')?>" class="btn btn-default">
-                            <i class="fa fa-calendar-check-o"></i> Date Range Profit
+                        <a href="<?=site_url('reports_enhanced/salesSummary?type=itemwise')?>" class="btn btn-primary">
+                            <i class="fa fa-list"></i> Item-wise Sales
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khata/Credit Reports -->
+        <div class="col-sm-6 col-md-4">
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-book"></i> Khata Reports
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    <p>Customer credit and outstanding balances.</p>
+                    <div class="btn-group-vertical btn-block">
+                        <a href="<?=site_url('reports_enhanced/khataReport')?>" class="btn btn-warning">
+                            <i class="fa fa-users"></i> Outstanding Balances
+                        </a>
+                        <a href="<?=site_url('customers')?>" class="btn btn-info">
+                            <i class="fa fa-list"></i> All Customers
                         </a>
                     </div>
                 </div>
@@ -46,41 +68,16 @@ defined('BASEPATH') OR exit('');
                     </h4>
                 </div>
                 <div class="panel-body">
-                    <p>View stock levels, values, and IMEI status reports.</p>
+                    <p>Stock levels and inventory analysis.</p>
                     <div class="btn-group-vertical btn-block">
-                        <a href="<?=site_url('reports/lowStock')?>" class="btn btn-default">
+                        <a href="<?=site_url('reports/lowStock')?>" class="btn btn-success">
                             <i class="fa fa-exclamation-triangle"></i> Low Stock Alert
                         </a>
-                        <a href="<?=site_url('reports/stockValue')?>" class="btn btn-default">
+                        <a href="<?=site_url('reports/stockValue')?>" class="btn btn-success">
                             <i class="fa fa-money"></i> Stock Value
                         </a>
-                        <a href="<?=site_url('reports/imeiStatus')?>" class="btn btn-default">
-                            <i class="fa fa-mobile"></i> IMEI Status
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Customer Reports -->
-        <div class="col-sm-6 col-md-4">
-            <div class="panel panel-info">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <i class="fa fa-users"></i> Customer Reports
-                    </h4>
-                </div>
-                <div class="panel-body">
-                    <p>View customer balances and payment history.</p>
-                    <div class="btn-group-vertical btn-block">
-                        <a href="<?=site_url('customers')?>" class="btn btn-default">
-                            <i class="fa fa-list"></i> All Customers
-                        </a>
-                        <a href="<?=site_url('customers')?>" class="btn btn-default">
-                            <i class="fa fa-exclamation-circle"></i> Outstanding Balances
-                        </a>
-                        <a href="<?=site_url('customers')?>" class="btn btn-default">
-                            <i class="fa fa-history"></i> Payment History
+                        <a href="<?=site_url('items')?>" class="btn btn-info">
+                            <i class="fa fa-list"></i> All Items
                         </a>
                     </div>
                 </div>

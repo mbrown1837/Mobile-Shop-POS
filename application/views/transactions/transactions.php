@@ -41,8 +41,11 @@ defined('BASEPATH') OR exit('');
                                         <th>Item</th>
                                         <th>Code</th>
                                         <th>Type</th>
+                                        <th>Brand</th>
+                                        <th>Color</th>
+                                        <th>SIM</th>
+                                        <th>IMEI(s)</th>
                                         <th>Price</th>
-                                        <th>Available</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -50,6 +53,10 @@ defined('BASEPATH') OR exit('');
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                    
+                    <!-- Mobile Selection Section (shown when mobile is selected) -->
+                    <div id="mobileSelectionSection" class="hidden">
                     </div>
                     
                     <!-- Standard Item Quantity (shown when item is selected) -->
@@ -98,21 +105,25 @@ defined('BASEPATH') OR exit('');
         </div>
 
         <div class="col-md-4">
-            <!-- Customer Section -->
-            <div class="panel panel-success">
+            <!-- Customer Section (Hidden by default, shown only for credit) -->
+            <div class="panel panel-success" id="customerPanel" style="display: none;">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <i class="fa fa-user"></i> Customer
+                        <i class="fa fa-user"></i> Select Customer <span class="text-danger">*</span>
                         <button type="button" class="btn btn-xs btn-primary pull-right" id="quickAddCustomerBtn" style="margin-top: -3px;">
                             <i class="fa fa-plus"></i> New
                         </button>
                     </h4>
                 </div>
                 <div class="panel-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-info-circle"></i> <strong>Credit Sale:</strong> Please select a customer for khata transaction.
+                    </div>
+                    
                     <div class="form-group">
-                        <label>Search Customer</label>
-                        <select id="customerSelect" class="form-control">
-                            <option value="">Walk-in Customer</option>
+                        <label>Search Customer <span class="text-danger">*</span></label>
+                        <select id="customerSelect" class="form-control" required>
+                            <option value="">Select Customer...</option>
                         </select>
                     </div>
                     
@@ -121,10 +132,9 @@ defined('BASEPATH') OR exit('');
                             <p><strong>Name:</strong> <span id="customerName"></span></p>
                             <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
                             <p>
-                                <strong>Balance:</strong> 
+                                <strong>Current Balance:</strong> 
                                 <span id="customerBalance" class="customer-balance">Rs. 0</span>
                             </p>
-                            <p><strong>Credit Limit:</strong> <span id="customerCreditLimit">Rs. 0</span></p>
                         </div>
                     </div>
                 </div>
@@ -136,89 +146,75 @@ defined('BASEPATH') OR exit('');
                     <h4 class="panel-title"><i class="fa fa-money"></i> Payment</h4>
                 </div>
                 <div class="panel-body">
-                    <div class="cart-summary">
-                        <table class="table table-condensed">
+                    <!-- Summary Section -->
+                    <div class="cart-summary" style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <table class="table table-condensed" style="margin-bottom: 0;">
                             <tr>
                                 <td>Subtotal:</td>
-                                <td class="text-right"><strong class="currency" id="subtotalAmount">Rs. 0.00</strong></td>
+                                <td class="text-right"><strong id="subtotalAmount">Rs. 0.00</strong></td>
                             </tr>
                             <tr>
                                 <td>
                                     Discount:
-                                    <input type="number" id="discountPercent" class="form-control input-sm" 
-                                           value="0" min="0" max="100" step="0.1" style="width: 80px; display: inline;">%
+                                    <input type="number" id="discountAmount" class="form-control input-sm" 
+                                           value="" min="0" step="0.01" 
+                                           style="width: 100px; display: inline; margin-left: 5px;" 
+                                           placeholder="0">
                                 </td>
-                                <td class="text-right"><strong class="currency" id="discountAmount">Rs. 0.00</strong></td>
-                            </tr>
-                            <tr>
-                                <td>After Discount:</td>
-                                <td class="text-right"><strong class="currency" id="afterDiscountAmount">Rs. 0.00</strong></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    VAT:
-                                    <input type="number" id="vatPercent" class="form-control input-sm" 
-                                           value="0" min="0" max="100" step="0.1" style="width: 80px; display: inline;">%
-                                </td>
-                                <td class="text-right"><strong class="currency" id="vatAmount">Rs. 0.00</strong></td>
-                            </tr>
-                            <tr class="success">
-                                <td><h4>Grand Total:</h4></td>
-                                <td class="text-right"><h4 class="currency-lg" id="grandTotalAmount">Rs. 0.00</h4></td>
+                                <td class="text-right"><strong id="discountDisplay">Rs. 0.00</strong></td>
                             </tr>
                         </table>
                     </div>
 
+                    <!-- Grand Total -->
+                    <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;">
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <h4 style="margin: 0; color: #155724;">Grand Total:</h4>
+                            </div>
+                            <div class="col-xs-6 text-right">
+                                <h4 style="margin: 0; color: #155724; font-weight: bold;" id="grandTotalAmount">Rs. 0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
                     <div class="form-group">
-                        <label>Payment Method</label>
-                        <select id="paymentMethod" class="form-control">
-                            <option value="">Select Payment Method</option>
-                            <option value="cash">Cash</option>
-                            <option value="pos">Card/POS</option>
-                            <option value="credit">Credit (Khata)</option>
-                            <option value="partial">Partial Payment</option>
+                        <label>Payment Method <span class="text-danger">*</span></label>
+                        <select id="paymentMethod" class="form-control" required>
+                            <option value="cash" selected>💵 Cash Payment</option>
+                            <option value="credit">📒 Credit (Khata)</option>
                         </select>
                     </div>
 
-                    <!-- Cash/POS Payment Fields -->
-                    <div id="fullPaymentSection" class="hidden">
-                        <div class="form-group">
-                            <label>Amount Tendered</label>
-                            <input type="number" id="amountTendered" class="form-control" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Change Due</label>
-                            <div class="form-control" id="changeDue">₨ 0.00</div>
-                        </div>
-                    </div>
-
-                    <!-- Partial Payment Fields -->
-                    <div id="partialPaymentSection" class="hidden">
-                        <div class="form-group">
-                            <label>Amount Paid Now</label>
-                            <input type="number" id="partialAmount" class="form-control" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Credit Amount</label>
-                            <div class="form-control" id="creditAmount">₨ 0.00</div>
+                    <!-- Cash Payment Fields -->
+                    <div id="cashPaymentSection" class="hidden">
+                        <div class="well well-sm" style="background: #e7f3ff; border: 1px solid #b3d9ff;">
+                            <div class="form-group">
+                                <label>Amount Received:</label>
+                                <input type="number" id="amountTendered" class="form-control" 
+                                       step="0.01" min="0" placeholder="Enter amount">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Change to Return:</label>
+                                <div id="changeDue" style="font-size: 18px; font-weight: bold; color: #28a745; padding: 8px; background: white; border-radius: 3px; text-align: center;">
+                                    Rs. 0.00
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Trade-In Section -->
-                    <div class="form-group">
-                        <button type="button" class="btn btn-info btn-block" id="addTradeInBtn">
-                            <i class="fa fa-exchange"></i> Add Trade-In
-                        </button>
-                    </div>
-                    <div id="tradeInInfo" class="hidden alert alert-info">
-                        <strong>Trade-In Value:</strong> <span id="tradeInValue">₨ 0</span>
-                        <button type="button" class="btn btn-xs btn-danger pull-right" id="removeTradeInBtn">Remove</button>
+                    <!-- Credit/Khata Info -->
+                    <div id="creditPaymentSection" class="hidden">
+                        <div class="alert alert-warning">
+                            <i class="fa fa-info-circle"></i> <strong>Credit Sale:</strong><br>
+                            Amount will be added to customer's khata.
+                        </div>
                     </div>
 
-                    <hr>
-
+                    <!-- Complete Button -->
                     <button type="button" class="btn btn-success btn-lg btn-block" id="completeTransactionBtn">
-                        <i class="fa fa-check"></i> Complete Transaction
+                        <i class="fa fa-check-circle"></i> Complete Transaction
                     </button>
                 </div>
             </div>
@@ -332,8 +328,8 @@ defined('BASEPATH') OR exit('');
                         <span class="help-block errMsg" id="quickCustPhoneErr"></span>
                     </div>
                     <div class="form-group">
-                        <label>Credit Limit (Rs.)</label>
-                        <input type="number" id="quickCustCreditLimit" class="form-control" value="50000" min="0">
+                        <label>Credit Limit (Rs.) <small class="text-muted">(Optional - Leave 0 for unlimited)</small></label>
+                        <input type="number" id="quickCustCreditLimit" class="form-control" value="0" min="0">
                     </div>
                     <div class="form-group">
                         <label>Address</label>

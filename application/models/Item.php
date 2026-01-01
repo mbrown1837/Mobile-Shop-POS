@@ -68,22 +68,23 @@ class Item extends CI_Model{
     
     /**
      * Enhanced unified search - searches by name, code, IMEI, brand, model
+     * Uses inventory_available view for accurate quantities
      * @param type $value
      * @return boolean
      */
     public function itemsearch($value){
         $escaped_value = $this->db->escape_like_str($value);
         
-        // Search in items table AND item_serials table (for IMEI)
-        $q = "SELECT DISTINCT items.* FROM items 
-            LEFT JOIN item_serials ON items.id = item_serials.item_id
+        // Search in inventory_available view AND item_serials table (for IMEI)
+        $q = "SELECT DISTINCT inv.* FROM inventory_available inv
+            LEFT JOIN item_serials ON inv.id = item_serials.item_id
             WHERE 
-            items.name LIKE '%".$escaped_value."%'
-            OR items.code LIKE '%".$escaped_value."%'
-            OR items.brand LIKE '%".$escaped_value."%'
-            OR items.model LIKE '%".$escaped_value."%'
+            inv.name LIKE '%".$escaped_value."%'
+            OR inv.code LIKE '%".$escaped_value."%'
+            OR inv.brand LIKE '%".$escaped_value."%'
+            OR inv.model LIKE '%".$escaped_value."%'
             OR item_serials.imei_number LIKE '%".$escaped_value."%'
-            ORDER BY items.name ASC";
+            ORDER BY inv.name ASC";
         
         $run_q = $this->db->query($q);
         

@@ -34,19 +34,6 @@ $(document).ready(function() {
     }
 
     // ========================================
-    // Credit Enable/Disable Toggle
-    // ========================================
-    $('#creditEnabled').on('change', function() {
-        if ($(this).is(':checked')) {
-            $('#creditLimitGroup').show(); // Show immediately without animation
-            $('#creditLimit').prop('required', true).val(10000).focus();
-        } else {
-            $('#creditLimitGroup').hide();
-            $('#creditLimit').prop('required', false).val(0);
-        }
-    });
-
-    // ========================================
     // Load Customers
     // ========================================
     function loadCustomers(url) {

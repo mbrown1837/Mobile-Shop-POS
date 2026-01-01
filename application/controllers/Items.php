@@ -70,6 +70,7 @@ class Items extends CI_Controller
     $orderFormat = $this->input->get('orderFormat', TRUE) ? $this->input->get('orderFormat', TRUE) : "ASC";
     $category = $this->input->get('category', TRUE);
     $itemType = $this->input->get('itemType', TRUE);
+    $stockStatus = $this->input->get('stockStatus', TRUE);
     $searchTerm = $this->input->get('search', TRUE);
 
     // If search term provided, use search method
@@ -86,6 +87,19 @@ class Items extends CI_Controller
         if ($itemType) {
           $data['allItems'] = array_filter($data['allItems'], function($item) use ($itemType) {
             return $item->item_type === $itemType;
+          });
+        }
+        if ($stockStatus) {
+          $data['allItems'] = array_filter($data['allItems'], function($item) use ($stockStatus) {
+            $qty = isset($item->available_qty) ? $item->available_qty : $item->quantity;
+            if ($stockStatus === 'sold_out') {
+              return $qty == 0;
+            } elseif ($stockStatus === 'low_stock') {
+              return $qty > 0 && $qty <= 5;
+            } elseif ($stockStatus === 'in_stock') {
+              return $qty > 5;
+            }
+            return true;
           });
         }
       }
@@ -130,6 +144,24 @@ class Items extends CI_Controller
       $this->db->where('item_type', $itemType);
     }
     $data['allItems'] = $this->item->getAll($orderBy, $orderFormat, $start, $limit);
+    
+    // Apply stock status filter after fetching
+    if ($stockStatus && $data['allItems']) {
+      $data['allItems'] = array_filter($data['allItems'], function($item) use ($stockStatus) {
+        $qty = isset($item->available_qty) ? $item->available_qty : $item->quantity;
+        if ($stockStatus === 'sold_out') {
+          return $qty == 0;
+        } elseif ($stockStatus === 'low_stock') {
+          return $qty > 0 && $qty <= 5;
+        } elseif ($stockStatus === 'in_stock') {
+          return $qty > 5;
+        }
+        return true;
+      });
+      // Re-index array after filtering
+      $data['allItems'] = array_values($data['allItems']);
+    }
+    
     $data['range'] = $totalItems > 0 ? "Showing " . ($start + 1) . "-" . ($start + count($data['allItems'])) . " of " . $totalItems : "";
     $data['links'] = $this->pagination->create_links(); //page links
     $data['sn'] = $start + 1;
@@ -657,6 +689,7 @@ class Items extends CI_Controller
 
   /**
    * Search items for POS (Name, Code, IMEI, Brand, Model)
+   * Excludes sold out items (quantity = 0)
    */
   public function searchForPos() {
     $this->genlib->ajaxOnly();
@@ -671,6 +704,16 @@ class Items extends CI_Controller
     }
 
     $items = $this->item->itemsearch($searchTerm);
+    
+    // Filter out sold out items
+    if ($items) {
+      $items = array_filter($items, function($item) {
+        $qty = isset($item->available_qty) ? $item->available_qty : $item->quantity;
+        return $qty > 0; // Only show items with stock
+      });
+      // Re-index array
+      $items = array_values($items);
+    }
 
     $json['status'] = 1;
     $json['items'] = $items ?: [];

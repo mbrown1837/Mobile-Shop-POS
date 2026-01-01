@@ -41,8 +41,8 @@ defined('BASEPATH') OR exit('');
                     <select id="customerListSortBy" class="form-control">
                         <option value="name-ASC">Name (A-Z)</option>
                         <option value="name-DESC">Name (Z-A)</option>
-                        <option value="balance-DESC">Balance (Highest First)</option>
-                        <option value="balance-ASC">Balance (Lowest First)</option>
+                        <option value="current_balance-DESC">Balance (Highest First)</option>
+                        <option value="current_balance-ASC">Balance (Lowest First)</option>
                         <option value="created_at-DESC">Date Added (Latest First)</option>
                         <option value="created_at-ASC">Date Added (Oldest First)</option>
                     </select>
@@ -94,25 +94,18 @@ defined('BASEPATH') OR exit('');
                     </div>
 
                     <div class="form-group">
-                        <label for="customerCnic">CNIC</label>
+                        <label for="customerCnic">CNIC (Optional)</label>
                         <input type="text" class="form-control" id="customerCnic" name="customerCnic" placeholder="xxxxx-xxxxxxx-x">
+                        <small class="text-muted">For identification purposes</small>
                     </div>
 
                     <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" id="creditEnabled" name="creditEnabled" value="1">
-                                <strong>Enable Credit/Khata for this customer</strong>
-                            </label>
-                        </div>
-                        <small class="text-muted">Only enable for trusted customers</small>
+                        <label for="customerNotes">Notes (Optional)</label>
+                        <textarea class="form-control" id="customerNotes" name="customerNotes" rows="2" placeholder="Any additional information about customer"></textarea>
                     </div>
 
-                    <div class="form-group" id="creditLimitGroup" style="display:none;">
-                        <label for="creditLimit">Credit Limit (PKR) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="creditLimit" name="creditLimit" value="0" min="0" step="1000">
-                        <span class="help-block text-muted">Maximum amount customer can owe</span>
-                        <span class="help-block text-danger" id="creditLimitErr"></span>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> <strong>Khata System:</strong> All customers can have unlimited credit/khata. Track payments in customer ledger.
                     </div>
                 </form>
             </div>

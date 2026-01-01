@@ -22,6 +22,7 @@
                         <th>CATEGORY</th>
                         <th>BRAND</th>
                         <th>QTY/IMEI</th>
+                        <th>STATUS</th>
                         <th>COST</th>
                         <th>SELLING</th>
                         <th>PROFIT</th>
@@ -59,11 +60,26 @@
                             $qty = isset($get->available_qty) ? $get->available_qty : $get->quantity;
                             ?>
                             <span id="itemQuantity-<?=$get->id?>"><?=$qty?></span>
-                            <?php if($qty == 0): ?>
-                                <br><span class="label label-danger">SOLD OUT</span>
-                            <?php endif; ?>
                             <?php if(isset($get->item_type) && $get->item_type === 'serialized'): ?>
                                 <br><a href="#" class="btn btn-xs btn-info view-imeis" data-item-id="<?=$get->id?>" data-item-name="<?=$get->name?>"><i class="fa fa-list"></i> IMEIs</a>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
+                            <?php 
+                            $qty = isset($get->available_qty) ? $get->available_qty : $get->quantity;
+                            $isSerialized = isset($get->item_type) && $get->item_type === 'serialized';
+                            
+                            if($qty == 0): ?>
+                                <span class="label label-danger"><i class="fa fa-times-circle"></i> SOLD OUT</span>
+                            <?php elseif($isSerialized): ?>
+                                <!-- For serialized items, just show IN STOCK if qty > 0 -->
+                                <span class="label label-success"><i class="fa fa-check-circle"></i> IN STOCK</span>
+                            <?php elseif($qty <= 5): ?>
+                                <span class="label label-warning"><i class="fa fa-exclamation-triangle"></i> LOW STOCK</span>
+                            <?php elseif($qty <= 10): ?>
+                                <span class="label label-info"><i class="fa fa-info-circle"></i> RUNNING LOW</span>
+                            <?php else: ?>
+                                <span class="label label-success"><i class="fa fa-check-circle"></i> IN STOCK</span>
                             <?php endif; ?>
                         </td>
                         <td>
