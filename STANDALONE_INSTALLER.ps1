@@ -59,8 +59,8 @@ $xamppPath = "C:\xampp"
 
 # Application configuration
 $appName = "mobile-shop-pos"
-$appVersion = "v1.1.0"
-$appZipUrl = "https://github.com/YOUR_USERNAME/mobile-shop-pos/releases/download/$appVersion/mobile-shop-pos-$appVersion.zip"
+$appVersion = "v2.0.0"
+$appZipUrl = "https://github.com/mbrown1837/Website-Monitoring-System/releases/download/$appVersion/mobile-shop-pos-$appVersion.zip"
 $appZipFile = "$env:TEMP\mobile-shop-pos.zip"
 $tempExtractPath = "$env:TEMP\mobile-shop-pos-extract"
 $destPath = "$xamppPath\htdocs\$appName"
@@ -69,7 +69,7 @@ $destPath = "$xamppPath\htdocs\$appName"
 $dbName = "mobile_shop_pos"
 $dbUser = "root"
 $dbPass = ""
-$dbFile = "$destPath\database\mobile_shop_pos_v1.1.0_final.sql"
+$dbFile = "$destPath\database\mobile_shop_pos_v2.0.0_final.sql"
 
 # Helper functions
 function Write-Step($step, $total, $message) {

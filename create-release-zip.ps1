@@ -7,7 +7,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Configuration
-$version = "v1.1.0"
+$version = "v2.0.0"
 $releaseFolder = "mobile-shop-pos-$version"
 $zipFile = "mobile-shop-pos-$version.zip"
 
@@ -16,7 +16,7 @@ $includeItems = @(
     "application",
     "system",
     "public",
-    "database/mobile_shop_pos_v1.1.0_final.sql",
+    "database/mobile_shop_pos_v2.0.0_final.sql",
     "index.php",
     "install.php",
     "ONE_CLICK_INSTALLER.bat",
@@ -53,13 +53,13 @@ foreach ($item in $includeItems) {
         
         if (Test-Path $item -PathType Container) {
             Copy-Item -Path $item -Destination $destination -Recurse -Force
-            Write-Host "  ✓ Copied folder: $item" -ForegroundColor Green
+            Write-Host "  + Copied folder: $item" -ForegroundColor Green
         } else {
             Copy-Item -Path $item -Destination $destination -Force
-            Write-Host "  ✓ Copied file: $item" -ForegroundColor Green
+            Write-Host "  + Copied file: $item" -ForegroundColor Green
         }
     } else {
-        Write-Host "  ✗ Not found: $item" -ForegroundColor Red
+        Write-Host "  - Not found: $item" -ForegroundColor Red
     }
 }
 
@@ -76,7 +76,7 @@ $cleanupPaths = @(
 foreach ($path in $cleanupPaths) {
     if (Test-Path $path) {
         Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "  ✓ Cleaned: $path" -ForegroundColor Green
+        Write-Host "  + Cleaned: $path" -ForegroundColor Green
     }
 }
 
@@ -122,4 +122,4 @@ Write-Host "2. Extract and install on fresh system" -ForegroundColor White
 Write-Host "3. Verify all features work" -ForegroundColor White
 Write-Host "4. Distribute to users" -ForegroundColor White
 Write-Host ""
-Write-Host "Ready for distribution! 🚀" -ForegroundColor Green
+Write-Host "Ready for distribution!" -ForegroundColor Green
