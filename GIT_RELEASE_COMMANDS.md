@@ -1,291 +1,135 @@
-# 🚀 Git Release Commands - v1.0.0
+# 🚀 Git Release Commands
 
-Follow these steps to create a GitHub release:
+Quick reference for creating GitHub releases.
 
----
+## 📋 Pre-Release Checklist
 
-## Step 1: Initialize Git (if not already done)
+- [ ] All changes committed
+- [ ] Database exported
+- [ ] Documentation updated
+- [ ] Version number updated
+- [ ] Release package tested
 
-```bash
-cd C:\xampp\htdocs\mobile-shop-pos
-git init
-```
+## 🎯 Create Release
 
----
-
-## Step 2: Add Remote Repository
-
-```bash
-# Replace with your GitHub repository URL
-git remote add origin https://github.com/YOUR_USERNAME/mobile-shop-pos.git
-```
-
----
-
-## Step 3: Create .gitignore
-
-Create `.gitignore` file with:
-
-```
-# Environment
-.env
-
-# Cache
-application/cache/*
-!application/cache/index.html
-!application/cache/.htaccess
-
-# Logs
-application/logs/*
-!application/logs/index.html
-!application/logs/.htaccess
-
-# Sessions
-system/sessions/*
-
-# IDE
-.vscode/
-.idea/
-*.sublime-*
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Temp
-*.tmp
-*.bak
-*.swp
-*~
-
-# Uploads (if any)
-public/uploads/*
-!public/uploads/.htaccess
-```
-
----
-
-## Step 4: Stage All Files
+### Step 1: Commit All Changes
 
 ```bash
-# Add all files
 git add .
-
-# Check status
-git status
+git commit -m "Release v1.1.0 - Customer ledger system with fixes"
 ```
 
----
-
-## Step 5: Create Initial Commit
+### Step 2: Create Tag
 
 ```bash
-git commit -m "🎉 Initial Release v1.0.0 - Production Ready
-
-✨ Features:
-- Complete inventory management with IMEI tracking
-- Customer credit/khata system with enable/disable
-- Cost price & profit tracking
-- Real-time IMEI validation
-- Multiple payment methods
-- Dashboard with analytics
-- Pakistani business context optimization
-
-🐛 Bug Fixes:
-- Fixed all dashboard errors
-- Fixed inventory view with cost price
-- Fixed customer ledger display
-- Replaced browser alerts with notifications
-
-📚 Documentation:
-- Comprehensive README.md
-- Detailed release notes
-- SQL migration files
-- Setup instructions
-
-✅ Client Approved & Production Ready"
+git tag -a v1.1.0 -m "Version 1.1.0 - Customer ledger system"
 ```
 
----
-
-## Step 6: Create and Push to Main Branch
+### Step 3: Push to GitHub
 
 ```bash
-# Create main branch
-git branch -M main
-
-# Push to GitHub
-git push -u origin main
-```
-
----
-
-## Step 7: Create Version Tag
-
-```bash
-# Create annotated tag
-git tag -a v1.0.0 -m "Release v1.0.0 - Production Ready
-
-Mobile Shop POS System
-- Complete inventory & IMEI tracking
-- Customer credit management
-- Profit tracking & reports
-- Pakistani business optimized
-
-Client approved and production ready!"
-
-# Push tag to GitHub
-git push origin v1.0.0
-```
-
----
-
-## Step 8: Create GitHub Release
-
-### Option A: Via GitHub Web Interface (Recommended)
-
-1. Go to your repository on GitHub
-2. Click on **"Releases"** (right sidebar)
-3. Click **"Create a new release"**
-4. Fill in:
-   - **Tag:** v1.0.0 (select existing tag)
-   - **Title:** Mobile Shop POS v1.0.0 - Production Release
-   - **Description:** Copy content from `RELEASE_NOTES_v1.0.0.md`
-5. Check **"Set as the latest release"**
-6. Click **"Publish release"**
-
-### Option B: Via GitHub CLI (if installed)
-
-```bash
-# Install GitHub CLI first: https://cli.github.com/
-
-# Create release
-gh release create v1.0.0 \
-  --title "Mobile Shop POS v1.0.0 - Production Release" \
-  --notes-file RELEASE_NOTES_v1.0.0.md \
-  --latest
-```
-
----
-
-## Step 9: Verify Release
-
-1. Check GitHub repository
-2. Verify tag is visible
-3. Verify release is published
-4. Test download link
-
----
-
-## 📦 Optional: Create Release Archive
-
-Create a clean distribution package:
-
-```bash
-# Create release folder
-mkdir mobile-shop-pos-v1.0.0
-
-# Copy necessary files (exclude .git, cache, logs)
-xcopy /E /I /EXCLUDE:exclude.txt . mobile-shop-pos-v1.0.0
-
-# Create ZIP
-# Use 7-Zip or WinRAR to create:
-# mobile-shop-pos-v1.0.0.zip
-```
-
-Create `exclude.txt`:
-```
-.git
-.gitignore
-application\cache\
-application\logs\
-.vscode
-.idea
-```
-
----
-
-## 🔄 Future Updates
-
-### For Next Release (v1.1.0):
-
-```bash
-# Make changes...
-
-# Commit changes
-git add .
-git commit -m "✨ Add new features for v1.1.0"
-
-# Create new tag
-git tag -a v1.1.0 -m "Release v1.1.0 - Feature Update"
-
-# Push
 git push origin main
 git push origin v1.1.0
-
-# Create release on GitHub
 ```
 
----
+### Step 4: Create GitHub Release
 
-## 🐛 Hotfix Release (v1.0.1):
+1. Go to: `https://github.com/YOUR_USERNAME/mobile-shop-pos/releases`
+2. Click **"Create a new release"**
+3. Select tag: `v1.1.0`
+4. Release title: `Mobile Shop POS v1.1.0`
+5. Description:
+   ```markdown
+   ## 🎉 Mobile Shop POS v1.1.0
+   
+   Complete point of sale system for mobile shops with customer ledger management.
+   
+   ### ✨ Features
+   - POS system with cart management
+   - Inventory management (serialized & standard items)
+   - Customer ledger (khata) system
+   - Sales reports and profit tracking
+   - IMEI tracking for mobile phones
+   - Credit/cash payment options
+   
+   ### 📦 Installation
+   See [QUICK_SETUP.md](QUICK_SETUP.md) for 5-minute setup guide.
+   
+   ### 📚 Documentation
+   - [Installation Guide](INSTALLATION_GUIDE.md)
+   - [Quick Setup](QUICK_SETUP.md)
+   - [System Verification](SYSTEM_VERIFICATION_CHECKLIST.md)
+   
+   ### 🔐 Default Login
+   - Username: `admin`
+   - Password: `admin123`
+   
+   **⚠️ Change password after first login!**
+   ```
 
+6. Upload `mobile-shop-pos-v1.1.0.zip`
+7. Click **"Publish release"**
+
+## 🔄 Update Existing Release
+
+### Update Tag:
 ```bash
-# Fix bug...
-
-# Commit fix
-git add .
-git commit -m "🐛 Fix critical bug in [feature]"
-
-# Create patch tag
-git tag -a v1.0.1 -m "Hotfix v1.0.1 - Bug fixes"
-
-# Push
-git push origin main
-git push origin v1.0.1
-
-# Create release on GitHub
+git tag -d v1.1.0
+git push origin :refs/tags/v1.1.0
+git tag -a v1.1.0 -m "Version 1.1.0 - Updated"
+git push origin v1.1.0
 ```
 
+### Update Files:
+1. Go to release page
+2. Click **"Edit release"**
+3. Upload new files
+4. Update description
+5. Click **"Update release"**
+
+## 📝 Version Naming
+
+Follow semantic versioning:
+- `v1.0.0` - Major release
+- `v1.1.0` - Minor update (new features)
+- `v1.1.1` - Patch (bug fixes)
+
+## 🎯 Quick Commands
+
+### View Tags:
+```bash
+git tag
+```
+
+### Delete Local Tag:
+```bash
+git tag -d v1.1.0
+```
+
+### Delete Remote Tag:
+```bash
+git push origin :refs/tags/v1.1.0
+```
+
+### View Commit History:
+```bash
+git log --oneline
+```
+
+### Create Release Branch:
+```bash
+git checkout -b release/v1.1.0
+```
+
+## ✅ Post-Release
+
+- [ ] Verify release on GitHub
+- [ ] Test download link
+- [ ] Update README with release link
+- [ ] Announce release
+- [ ] Monitor for issues
+
 ---
 
-## 📋 Checklist Before Release
-
-- [ ] All features tested
-- [ ] No critical bugs
-- [ ] README.md updated
-- [ ] RELEASE_NOTES created
-- [ ] .env.example provided
-- [ ] SQL files included
-- [ ] .gitignore configured
-- [ ] Sensitive data removed
-- [ ] Default passwords documented
-- [ ] Installation tested
-- [ ] Client approved
-
----
-
-## 🎯 Post-Release Tasks
-
-1. ✅ Announce release
-2. ✅ Update documentation
-3. ✅ Monitor for issues
-4. ✅ Collect feedback
-5. ✅ Plan next version
-
----
-
-## 📞 Support
-
-If you encounter issues:
-1. Check existing GitHub issues
-2. Create new issue with details
-3. Include error messages
-4. Provide steps to reproduce
-
----
-
-**Release Manager:** Development Team  
-**Release Date:** December 31, 2024  
-**Status:** ✅ Production Ready
+**Current Version**: v1.1.0  
+**Repository**: https://github.com/YOUR_USERNAME/mobile-shop-pos

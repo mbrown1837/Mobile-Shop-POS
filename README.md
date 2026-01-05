@@ -1,377 +1,304 @@
 # 📱 Mobile Shop POS System
 
-**Version 1.0.0** - Production Ready  
-A complete Point of Sale system designed specifically for Pakistani mobile phone shops with IMEI tracking, credit/khata management, and comprehensive inventory control.
+A comprehensive Point of Sale (POS) system designed specifically for mobile phone shops. Manage inventory, track IMEI numbers, handle customer credit (Khata), and generate detailed reports.
 
----
+## ✨ Key Features
 
-## 🌟 Key Features
+### 🛒 Point of Sale
+- **Smart Search**: Search by name, code, IMEI, brand, or model
+- **Dual Item Types**:
+  - Serialized items (mobiles) with IMEI tracking
+  - Standard items (accessories) with quantity management
+- **Payment Methods**: Cash and Credit/Khata
+- **IMEI Management**: Automatic locking and tracking for mobile phones
+- **Dual SIM Support**: Handle multiple IMEIs per device
+- **Receipt Generation**: Clean, printable receipts
 
 ### 📦 Inventory Management
-- ✅ **Dual Item Types:**
-  - **Standard Items** - Accessories (cables, cases, chargers) with quantity tracking
-  - **Serialized Items** - Mobile phones with individual IMEI tracking
-- ✅ **Real-time IMEI Validation** - Instant duplicate detection while typing
-- ✅ **Cost & Profit Tracking** - Automatic profit calculation per item
-- ✅ **Stock Management** - Add stock, deficit tracking, low stock alerts
-- ✅ **Multi-color Support** - Track same model in different colors
-- ✅ **Warranty Management** - Track warranty periods per item
-- ✅ **Advanced Filters** - Filter by category, type, search by name/code/IMEI
+- Add, edit, and manage items
+- IMEI tracking for mobile phones
+- Stock status indicators (In Stock, Low Stock, Sold Out)
+- Filter by stock status
+- Automatic quantity updates on sales
+- Cost price and profit tracking
 
-### 💰 Sales & Transactions
-- ✅ **POS Interface** - Fast and intuitive sales processing
-- ✅ **Multiple Payment Methods** - Cash, POS, Credit/Khata, Mixed payments
-- ✅ **IMEI Selection** - Choose specific IMEI for serialized items
-- ✅ **Receipt Generation** - Thermal printer support
-- ✅ **Transaction History** - Complete sales records with filters
+### 👥 Customer Management
+- Customer database with contact details
+- Credit limit management
+- Current balance tracking (Khata/Udhar)
+- Customer ledger with transaction history
+- Payment recording
+- Outstanding balance reports
 
-### 👥 Customer Management (Khata System)
-- ✅ **Credit Control** - Enable/disable credit per customer
-- ✅ **Credit Limits** - Set maximum credit amount
-- ✅ **Customer Ledger** - Complete transaction history
-- ✅ **Payment Recording** - Track payments and outstanding balances
-- ✅ **Status Management** - Active, Inactive, Blocked customers
-- ✅ **CNIC Tracking** - Customer identification
-- ✅ **Smart Filtering** - Only active customers show in POS
+### 📊 Reports & Analytics
+- **Sales Summary**: Daily, monthly, and item-wise reports
+- **Khata Report**: Outstanding customer balances
+- **Profit Tracking**: Real-time profit calculations
+- **Dashboard**: Visual overview with graphs and metrics
+- **Payment Breakdown**: Cash vs Credit analysis
 
-### 📊 Dashboard & Reports
-- ✅ **Real-time Dashboard** - Today's earnings, sales summary
-- ✅ **Payment Method Analytics** - Visual breakdown of payment types
-- ✅ **Profit Reports** - Daily, monthly, and custom date ranges
-- ✅ **Inventory Reports** - Stock value, low stock alerts
-- ✅ **Customer Reports** - Outstanding balances, credit usage
-
-### 🎨 User Experience
-- ✅ **Pakistani Context** - Designed for local business practices
-- ✅ **Urdu-friendly** - Works with Urdu names and addresses
-- ✅ **No Email Required** - Phone-based customer management
-- ✅ **Custom Notifications** - No browser alerts, clean UI notifications
-- ✅ **Responsive Design** - Works on desktop and tablets
-- ✅ **Fast Performance** - Optimized for quick operations
-
----
+### 📈 Dashboard
+- Today's sales and profit metrics
+- Outstanding khata summary
+- Inventory status
+- Monthly sales graph (smooth area chart)
+- Quick action buttons
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- **XAMPP** (Apache + MySQL + PHP 7.4+)
-- **Web Browser** (Chrome, Firefox, Edge)
-- **Windows/Linux/Mac**
+### Requirements
+- PHP 7.4+ (PHP 8.0+ recommended)
+- MySQL 5.7+ or MariaDB 10.3+
+- Apache with mod_rewrite enabled
+- Modern web browser
 
-### Installation Steps
+### Installation
 
-1. **Download & Extract**
+#### ⚡ Quick Install (Automated - RECOMMENDED)
+
+1. **Extract files** to web directory
+2. **Open browser**: `http://localhost/mobile-shop-pos/install.php`
+3. **Follow wizard** (2-3 minutes)
+4. **Done!** 🎉
+
+See [AUTOMATED_INSTALLER_GUIDE.md](AUTOMATED_INSTALLER_GUIDE.md) for details.
+
+#### 📝 Manual Install
+
+1. **Clone or Download**:
    ```bash
-   # Extract to XAMPP htdocs folder
-   C:\xampp\htdocs\mobile-shop-pos\
+   git clone <repository-url>
+   cd mobile-shop-pos
    ```
 
-2. **Create Database**
-   ```sql
-   CREATE DATABASE mobile_shop_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+2. **Create Database**:
+   - Create database: `mobile_shop_pos`
+   - Import: `database/mobile_shop_pos_v1.1.0_final.sql`
 
-3. **Import Database**
-   - Open phpMyAdmin: `http://localhost/phpmyadmin`
-   - Select `mobile_shop_pos` database
-   - Import: `database/mobile_shop_pos_complete.sql`
+3. **Configure**:
+   - Update `application/config/database.php` with your credentials
+   - Update `application/config/config.php` with your base URL
 
-4. **Run Required SQL Updates**
-   Execute these SQL files in order:
-   ```sql
-   -- 1. Add cost price column
-   database/add_cost_price_column.sql
-   
-   -- 2. Fix inventory view
-   database/fix_inventory_view.sql
-   
-   -- 3. Add credit enabled column
-   database/add_credit_enabled_column.sql
-   
-   -- 4. Fix customer ledger
-   database/fix_customer_ledger_columns.sql
-   ```
+4. **Access**:
+   - Open: `http://localhost/mobile-shop-pos/`
+   - Login: `admin` / `admin123`
+   - **Change password immediately!**
 
-5. **Configure Environment**
-   Edit `.env` file:
-   ```env
-   # Database
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASS=
-   DB_NAME=mobile_shop_pos
-   
-   # Shop Details
-   SHOP_NAME=Your Shop Name
-   SHOP_ADDRESS=Your Address
-   SHOP_PHONE=+92-XXX-XXXXXXX
-   SHOP_NTN=XXXXXXX-X
-   ```
+📖 **For detailed instructions**:
+- **Automated**: [AUTOMATED_INSTALLER_GUIDE.md](AUTOMATED_INSTALLER_GUIDE.md) ⚡
+- **Manual**: [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
+- **Quick Start**: [QUICK_SETUP.md](QUICK_SETUP.md)
 
-6. **Access Application**
-   ```
-   URL: http://localhost/mobile-shop-pos/
-   Default Login:
-   Email: admin@mobileshop.com
-   Password: admin123
-   ```
+## 📸 Screenshots
 
-7. **Change Default Password**
-   ⚠️ **Important:** Change admin password immediately after first login!
+### Dashboard
+Clean, responsive dashboard with real-time metrics and sales graph.
 
----
+### POS Interface
+Intuitive search and cart management with support for both mobile phones and accessories.
 
-## 📖 User Guide
+### Customer Management
+Track customer balances, credit limits, and transaction history.
+
+### Reports
+Comprehensive sales and profit reports with filtering options.
+
+## 🔧 Technology Stack
+
+- **Backend**: PHP (CodeIgniter 3)
+- **Database**: MySQL/MariaDB
+- **Frontend**: HTML5, CSS3, JavaScript, jQuery
+- **UI Framework**: Bootstrap 3
+- **Charts**: Chart.js
+- **Icons**: Font Awesome
+
+## 📋 System Architecture
+
+### Database Tables
+- `items` - Product inventory
+- `item_serials` - IMEI tracking for mobile phones
+- `customers` - Customer information
+- `customer_ledger` - Transaction history
+- `transactions` - Sales records
+- `admin` - User authentication
+- `inventory_available` - View for accurate stock counts
+
+### Key Features Implementation
+- **IMEI Tracking**: Status flow (available → reserved → sold)
+- **Credit System**: Automatic balance updates in customer ledger
+- **Profit Calculation**: Real-time profit tracking per transaction
+- **Dynamic Search**: Responsive table with conditional columns
+
+## 🔐 Security Features
+
+- Session-based authentication
+- Password hashing
+- SQL injection prevention (prepared statements)
+- XSS protection
+- CSRF protection
+- Input validation and sanitization
+
+## 📱 Mobile Responsive
+
+The system is fully responsive and works on:
+- Desktop computers
+- Tablets
+- Mobile phones
+
+## 🛠️ Configuration
+
+### Shop Settings
+Configure your shop details in Settings:
+- Shop Name
+- Address
+- Contact Number
+- Currency Symbol
+
+### Environment Variables
+Optional `.env` file for shop configuration:
+```env
+SHOP_NAME=Your Shop Name
+SHOP_ADDRESS=Your Address
+SHOP_PHONE=Your Phone
+CURRENCY_SYMBOL=Rs.
+```
+
+## 📦 Release Management
+
+### Creating a Release
+Use the provided script to create a clean release package:
+```bash
+.\create-release-zip.ps1
+```
+
+This creates a production-ready ZIP file excluding:
+- Development files
+- Git repository
+- Documentation files
+- Test files
+
+See [CREATE_RELEASE_ZIP.md](CREATE_RELEASE_ZIP.md) for details.
+
+## 🔄 Version History
+
+### v1.1.0 (Current)
+- ✅ Simplified POS (Cash and Credit only)
+- ✅ Dual SIM support (multiple IMEIs)
+- ✅ Dynamic search results
+- ✅ Customer credit/khata system
+- ✅ Improved dashboard with graphs
+- ✅ Stock status filters
+- ✅ Responsive design improvements
+- ✅ Customer delete functionality
+- ✅ Simplified receipt format
+
+### v1.0.0
+- Initial release
+- Basic POS functionality
+- Inventory management
+- Customer management
+- Basic reporting
+
+## 📝 Usage Guide
 
 ### Adding Items
 
-**Standard Items (Accessories):**
-1. Go to **Inventory Items**
-2. Click **Add New Item**
-3. Select **Standard** type
-4. Fill: Name, Category, Brand, Price, Quantity
-5. Optional: Cost Price (for profit tracking)
-6. Click **Add Item**
+**Standard Items (Accessories)**:
+1. Go to Manage Items
+2. Click "Add New Item"
+3. Select "Standard" type
+4. Enter name, price, quantity
+5. Save
 
-**Serialized Items (Mobiles):**
-1. Go to **Inventory Items**
-2. Click **Add New Item**
-3. Select **Serialized** type
-4. Fill: Name, Category, Brand, Selling Price
-5. Add IMEI numbers (system validates duplicates)
-6. Optional: Color, Cost Price
-7. Click **Add Item**
+**Serialized Items (Mobiles)**:
+1. Go to Manage Items
+2. Click "Add New Item"
+3. Select "Serialized" type
+4. Enter name, price, brand, model
+5. Add IMEI numbers (1 or 2 for dual SIM)
+6. Save
+
+### Making a Sale
+
+1. Search for item (name, code, IMEI, brand)
+2. Click "Add" to add to cart
+3. For mobiles: Select specific unit with IMEI
+4. For accessories: Choose quantity
+5. Apply discount (optional)
+6. Select payment method:
+   - **Cash**: Enter amount received
+   - **Credit**: Select customer
+7. Complete transaction
+8. Print receipt
 
 ### Managing Customers
 
-**Add Customer:**
-1. Go to **Customers**
-2. Click **Add Customer**
-3. Fill: Name, Phone (required)
-4. Optional: Address, CNIC
-5. **Enable Credit** checkbox if trusted customer
-6. Set Credit Limit (e.g., 50,000)
-7. Click **Save**
+1. Go to Customers
+2. Add customer with name, phone, credit limit
+3. View ledger for transaction history
+4. Record payments for outstanding balances
+5. Track khata/udhar
 
-**Customer Types:**
-- **Cash Customer** - Credit disabled, cash only
-- **Credit Customer** - Credit enabled with limit
-- **Inactive** - Hidden from POS
-- **Blocked** - Cannot transact
+### Viewing Reports
 
-### Processing Sales
-
-1. Go to **Transactions**
-2. Search customer (or walk-in)
-3. Add items to cart
-4. For mobiles: Select specific IMEI
-5. Choose payment method:
-   - Cash
-   - POS/Card
-   - Credit (if customer has credit enabled)
-   - Mixed payment
-6. Complete sale
-7. Print receipt
-
-### Recording Payments
-
-1. Go to **Customers**
-2. Find customer with balance
-3. Click **💰 Payment** button
-4. Enter amount
-5. Add notes (optional)
-6. Click **Record Payment**
-
----
-
-## 🗄️ Database Structure
-
-### Key Tables
-- **items** - Inventory items (standard & serialized)
-- **item_serials** - IMEI tracking for mobiles
-- **customers** - Customer information
-- **customer_ledger** - Credit/payment history
-- **transactions** - Sales records
-- **admin** - User accounts
-
-### Important Views
-- **inventory_available** - Real-time stock with IMEI counts
-- **profit_report** - Profit calculations
-- **daily_sales_summary** - Sales analytics
-
----
-
-## 🔧 Configuration
-
-### Shop Settings (.env)
-```env
-SHOP_NAME=Mobile World
-SHOP_ADDRESS=Shop #123, Main Market, Karachi
-SHOP_PHONE=+92-300-1234567
-SHOP_NTN=1234567-8
-CURRENCY_SYMBOL=Rs.
-CURRENCY_CODE=PKR
-```
-
-### Thermal Printer
-```env
-PRINTER_TYPE=network
-PRINTER_ADDRESS=192.168.1.100
-PRINTER_PORT=9100
-```
-
----
-
-## 📊 Reports Available
-
-1. **Dashboard**
-   - Today's earnings
-   - Payment method breakdown
-   - Quick stats
-
-2. **Profit Reports**
-   - Daily profit
-   - Monthly profit
-   - Custom date range
-
-3. **Inventory Reports**
-   - Stock value
-   - Low stock items
-   - IMEI status
-
-4. **Customer Reports**
-   - Outstanding balances
-   - Credit usage
-   - Payment history
-
----
-
-## 🛡️ Security Features
-
-- ✅ Password hashing (bcrypt)
-- ✅ SQL injection protection
-- ✅ XSS prevention
-- ✅ CSRF protection
-- ✅ Session management
-- ✅ Role-based access control
-- ✅ Input validation
-
----
+1. Go to Reports
+2. Select report type:
+   - Sales Summary (Daily/Monthly/Item-wise)
+   - Khata Report (Outstanding balances)
+3. Filter by date range
+4. Print or export
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-**1. Database Connection Error**
-```
-Solution: Check .env file, verify MySQL is running
-```
+**404 Errors**: Enable Apache mod_rewrite  
+**Database Connection**: Check credentials in `database.php`  
+**Blank Page**: Check PHP version (7.4+ required)  
+**Permission Errors**: Set proper folder permissions
 
-**2. Items Not Showing**
-```
-Solution: Run database/fix_inventory_view.sql
-```
+See [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) for detailed troubleshooting.
 
-**3. Cost Price Not Showing**
-```
-Solution: Run database/add_cost_price_column.sql
-```
+## 💾 Backup
 
-**4. Customer Ledger Errors**
-```
-Solution: Run database/fix_customer_ledger_columns.sql
-```
+**Important**: Regular backups are essential!
 
-**5. IMEI Validation Not Working**
-```
-Solution: Clear browser cache, check console for errors
-```
+1. **Database**: Export from phpMyAdmin regularly
+2. **Files**: Backup entire project folder
+3. **Frequency**: Daily backups recommended for active shops
 
----
+## 🤝 Contributing
 
-## 📝 Changelog
-
-### Version 1.0.0 (December 2024)
-- ✅ Complete inventory management system
-- ✅ IMEI tracking with real-time validation
-- ✅ Customer credit/khata system
-- ✅ Cost price & profit tracking
-- ✅ Multiple payment methods
-- ✅ Dashboard with analytics
-- ✅ Thermal printer support
-- ✅ Pakistani business context optimization
-- ✅ Custom notifications (no browser alerts)
-- ✅ Responsive design
-- ✅ Email field removed (Pakistani context)
-- ✅ Credit enable/disable per customer
-- ✅ Active/Inactive customer filtering
-
----
-
-## 🤝 Support
-
-For issues, questions, or feature requests:
-- Create an issue on GitHub
-- Email: support@mobileshoppos.com
-
----
+This is a production system. For modifications:
+1. Test thoroughly in development environment
+2. Backup database before updates
+3. Document all changes
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+See [license.txt](license.txt) for license information.
+
+## 🙏 Credits
+
+Built with:
+- CodeIgniter Framework
+- Bootstrap
+- jQuery
+- Chart.js
+- Font Awesome
+- Select2
+
+## 📞 Support
+
+For installation help or issues:
+1. Check [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
+2. Review [SYSTEM_VERIFICATION_CHECKLIST.md](SYSTEM_VERIFICATION_CHECKLIST.md)
+3. Check troubleshooting section above
 
 ---
 
-## 👨‍💻 Credits
+**Version**: 1.1.0  
+**Last Updated**: January 2026  
+**Status**: Production Ready ✅
 
-**Developed for Pakistani Mobile Phone Shops**  
-Optimized for local business practices and requirements.
-
-**Technology Stack:**
-- CodeIgniter 3.x
-- MySQL 5.7+
-- jQuery 3.x
-- Bootstrap 3.x
-- Font Awesome 4.x
-
----
-
-## 🎯 Roadmap
-
-### Planned Features
-- [ ] SMS notifications for customers
-- [ ] WhatsApp integration
-- [ ] Barcode scanning
-- [ ] Multi-branch support
-- [ ] Mobile app
-- [ ] Online payment integration (JazzCash, EasyPaisa)
-- [ ] Backup automation
-- [ ] Advanced analytics
-
----
-
-## ⚠️ Important Notes
-
-1. **Backup Regularly** - Always backup your database
-2. **Change Default Password** - Security first!
-3. **Test Before Production** - Use test data initially
-4. **Keep Updated** - Check for updates regularly
-5. **Secure Your Server** - Use HTTPS in production
-
----
-
-## 🚀 Production Deployment
-
-### Recommended Setup
-- **VPS/Dedicated Server** (not shared hosting)
-- **SSL Certificate** (Let's Encrypt free)
-- **Regular Backups** (daily automated)
-- **Firewall** (UFW/iptables)
-- **PHP 7.4+** with required extensions
-- **MySQL 5.7+** or MariaDB 10.3+
-
----
-
-**Made with ❤️ for Pakistani Mobile Shop Owners**
-
-*Simplifying business, one sale at a time.* 🇵🇰📱
+Made with ❤️ for mobile shop owners

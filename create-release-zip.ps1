@@ -1,160 +1,125 @@
-# Mobile Shop POS - Release ZIP Creator
-# Version 1.0.0
-# Creates a clean distribution package
+# Mobile Shop POS - Release Package Creator
+# This script creates a clean release package for distribution
 
-$version = "v1.0.0"
-$projectName = "mobile-shop-pos"
-$zipName = "$projectName-$version.zip"
-$tempFolder = "$projectName-$version"
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Mobile Shop POS - Release Package Creator" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "  Mobile Shop POS - Release Packager" -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+# Configuration
+$version = "v1.1.0"
+$releaseFolder = "mobile-shop-pos-$version"
+$zipFile = "mobile-shop-pos-$version.zip"
 
-Write-Host "Creating release package: $zipName" -ForegroundColor Green
-Write-Host "Please wait...`n" -ForegroundColor Yellow
-
-# Create temp folder
-if (Test-Path $tempFolder) {
-    Write-Host "Removing old temp folder..." -ForegroundColor Yellow
-    Remove-Item $tempFolder -Recurse -Force
-}
-New-Item -ItemType Directory -Path $tempFolder | Out-Null
-
-# Files and folders to EXCLUDE
-$excludePatterns = @(
-    '*.git*',
-    '*\.vscode*',
-    '*\.idea*',
-    '*.sublime-*',
-    '*\.DS_Store*',
-    '*Thumbs.db*',
-    '*desktop.ini*',
-    '*.tmp',
-    '*.bak',
-    '*.swp',
-    '*~',
-    '*create-release-zip.ps1*',
-    "*$zipName*",
-    '*application\cache\*.php',
-    '*application\logs\*.log',
-    '*application\logs\log-*.php'
+# Files and folders to include
+$includeItems = @(
+    "application",
+    "system",
+    "public",
+    "database/mobile_shop_pos_v1.1.0_final.sql",
+    "index.php",
+    "install.php",
+    "ONE_CLICK_INSTALLER.bat",
+    "FULL_AUTO_INSTALLER.ps1",
+    ".htaccess",
+    "composer.json",
+    "license.txt",
+    "README.md",
+    "INSTALLATION_GUIDE.md",
+    "QUICK_SETUP.md",
+    "AUTOMATED_INSTALLER_GUIDE.md",
+    "ONE_CLICK_INSTALLATION_GUIDE.md",
+    "INSTALLATION_OPTIONS_SUMMARY.md",
+    "SYSTEM_VERIFICATION_CHECKLIST.md"
 )
 
-# Copy all files
-Write-Host "Copying project files..." -ForegroundColor Yellow
-$fileCount = 0
+# Create release folder
+Write-Host "Creating release folder..." -ForegroundColor Yellow
+if (Test-Path $releaseFolder) {
+    Remove-Item -Recurse -Force $releaseFolder
+}
+New-Item -ItemType Directory -Path $releaseFolder | Out-Null
 
-Get-ChildItem -Path . -Recurse -Force | ForEach-Object {
-    $relativePath = $_.FullName.Substring((Get-Location).Path.Length + 1)
-    
-    # Check if should exclude
-    $shouldExclude = $false
-    foreach ($pattern in $excludePatterns) {
-        if ($relativePath -like $pattern) {
-            $shouldExclude = $true
-            break
-        }
-    }
-    
-    # Special handling for cache and logs folders
-    if ($relativePath -like '*application\cache\*' -and $_.Name -ne 'index.html' -and $_.Name -ne '.htaccess') {
-        $shouldExclude = $true
-    }
-    if ($relativePath -like '*application\logs\*' -and $_.Name -ne 'index.html' -and $_.Name -ne '.htaccess') {
-        $shouldExclude = $true
-    }
-    
-    if (-not $shouldExclude) {
-        $destination = Join-Path $tempFolder $relativePath
+# Copy files
+Write-Host "Copying files..." -ForegroundColor Yellow
+foreach ($item in $includeItems) {
+    if (Test-Path $item) {
+        $destination = Join-Path $releaseFolder $item
+        $destinationDir = Split-Path $destination -Parent
         
-        if ($_.PSIsContainer) {
-            if (-not (Test-Path $destination)) {
-                New-Item -ItemType Directory -Path $destination -Force | Out-Null
-            }
-        } else {
-            $destDir = Split-Path $destination -Parent
-            if (-not (Test-Path $destDir)) {
-                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-            }
-            Copy-Item $_.FullName -Destination $destination -Force
-            $fileCount++
-            
-            if ($fileCount % 100 -eq 0) {
-                Write-Host "  Copied $fileCount files..." -ForegroundColor Gray
-            }
+        if (-not (Test-Path $destinationDir)) {
+            New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
         }
+        
+        if (Test-Path $item -PathType Container) {
+            Copy-Item -Path $item -Destination $destination -Recurse -Force
+            Write-Host "  ✓ Copied folder: $item" -ForegroundColor Green
+        } else {
+            Copy-Item -Path $item -Destination $destination -Force
+            Write-Host "  ✓ Copied file: $item" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "  ✗ Not found: $item" -ForegroundColor Red
     }
 }
 
-Write-Host "  Total files copied: $fileCount" -ForegroundColor Green
+# Clean up unnecessary files from release
+Write-Host ""
+Write-Host "Cleaning up..." -ForegroundColor Yellow
 
-# Ensure important folders exist with index.html
-Write-Host "`nEnsuring folder structure..." -ForegroundColor Yellow
-
-$keepFolders = @(
-    "application\cache",
-    "application\logs"
+$cleanupPaths = @(
+    "$releaseFolder/application/cache/*",
+    "$releaseFolder/application/logs/*",
+    "$releaseFolder/.env"
 )
 
-foreach ($folder in $keepFolders) {
-    $folderPath = Join-Path $tempFolder $folder
-    if (-not (Test-Path $folderPath)) {
-        New-Item -ItemType Directory -Path $folderPath -Force | Out-Null
-    }
-    
-    # Create index.html if not exists
-    $indexPath = Join-Path $folderPath "index.html"
-    if (-not (Test-Path $indexPath)) {
-        @"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>403 Forbidden</title>
-</head>
-<body>
-    <h1>Directory access is forbidden.</h1>
-</body>
-</html>
-"@ | Out-File -FilePath $indexPath -Encoding UTF8
-        Write-Host "  Created: $folder\index.html" -ForegroundColor Gray
+foreach ($path in $cleanupPaths) {
+    if (Test-Path $path) {
+        Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "  ✓ Cleaned: $path" -ForegroundColor Green
     }
 }
 
-# Create ZIP
-Write-Host "`nCreating ZIP archive..." -ForegroundColor Yellow
-if (Test-Path $zipName) {
-    Remove-Item $zipName -Force
-}
+# Create .gitkeep files for empty directories
+$emptyDirs = @(
+    "$releaseFolder/application/cache",
+    "$releaseFolder/application/logs"
+)
 
-try {
-    Compress-Archive -Path $tempFolder -DestinationPath $zipName -CompressionLevel Optimal
-    
-    # Cleanup temp folder
-    Remove-Item $tempFolder -Recurse -Force
-    
-    # Show result
-    $zipSize = (Get-Item $zipName).Length / 1MB
-    
-    Write-Host "`n========================================" -ForegroundColor Green
-    Write-Host "  SUCCESS!" -ForegroundColor Green
-    Write-Host "========================================" -ForegroundColor Green
-    Write-Host "`nPackage created: $zipName" -ForegroundColor Cyan
-    Write-Host "Size: $([math]::Round($zipSize, 2)) MB" -ForegroundColor Cyan
-    Write-Host "Files: $fileCount" -ForegroundColor Cyan
-    Write-Host "`nReady to upload to GitHub Release!" -ForegroundColor Green
-    Write-Host "`nNext steps:" -ForegroundColor Yellow
-    Write-Host "1. Go to: https://github.com/YOUR_USERNAME/mobile-shop-pos/releases" -ForegroundColor White
-    Write-Host "2. Click 'Create release from tag' for v1.0.0" -ForegroundColor White
-    Write-Host "3. Attach this ZIP file" -ForegroundColor White
-    Write-Host "4. Publish release`n" -ForegroundColor White
-    
-} catch {
-    Write-Host "`nERROR: Failed to create ZIP file" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    
-    # Cleanup on error
-    if (Test-Path $tempFolder) {
-        Remove-Item $tempFolder -Recurse -Force
+foreach ($dir in $emptyDirs) {
+    if (Test-Path $dir) {
+        New-Item -Path "$dir/.gitkeep" -ItemType File -Force | Out-Null
     }
 }
+
+# Create ZIP file
+Write-Host ""
+Write-Host "Creating ZIP file..." -ForegroundColor Yellow
+
+if (Test-Path $zipFile) {
+    Remove-Item $zipFile -Force
+}
+
+Compress-Archive -Path $releaseFolder -DestinationPath $zipFile -CompressionLevel Optimal
+
+# Get file size
+$zipSize = (Get-Item $zipFile).Length / 1MB
+$zipSizeFormatted = "{0:N2} MB" -f $zipSize
+
+# Summary
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "SUCCESS! Release package created" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Release Folder: $releaseFolder" -ForegroundColor White
+Write-Host "ZIP File: $zipFile" -ForegroundColor White
+Write-Host "File Size: $zipSizeFormatted" -ForegroundColor White
+Write-Host ""
+Write-Host "Next Steps:" -ForegroundColor Yellow
+Write-Host "1. Test the release package" -ForegroundColor White
+Write-Host "2. Extract and install on fresh system" -ForegroundColor White
+Write-Host "3. Verify all features work" -ForegroundColor White
+Write-Host "4. Distribute to users" -ForegroundColor White
+Write-Host ""
+Write-Host "Ready for distribution! 🚀" -ForegroundColor Green
