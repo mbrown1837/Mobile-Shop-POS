@@ -69,7 +69,7 @@ $destPath = "$xamppPath\htdocs\$appName"
 $dbName = "mobile_shop_pos"
 $dbUser = "root"
 $dbPass = ""
-$dbFile = "$destPath\database\mobile_shop_pos_v2.0.0_final.sql"
+$dbFile = "$destPath\database\mobile_shop_pos_v2.0.0_clean.sql"
 
 # Helper functions
 function Write-Step($step, $total, $message) {

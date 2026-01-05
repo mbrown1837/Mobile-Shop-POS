@@ -16,7 +16,7 @@ $includeItems = @(
     "application",
     "system",
     "public",
-    "database/mobile_shop_pos_v2.0.0_final.sql",
+    "database/mobile_shop_pos_v2.0.0_clean.sql",
     "index.php",
     "install.php",
     "ONE_CLICK_INSTALLER.bat",
