@@ -60,7 +60,7 @@ $xamppPath = "C:\xampp"
 # Application configuration
 $appName = "mobile-shop-pos"
 $appVersion = "v2.0.0"
-$appZipUrl = "https://github.com/mbrown1837/Mobile-Shop-POS/releases/download/$appVersion/mobile-shop-pos-$appVersion.zip"
+$appZipUrl = "https://github.com/mbrown1837/Mobile-Shop-POS/releases/download/2.0.0/mobile-shop-pos-v2.0.0.zip"
 $appZipFile = "$env:TEMP\mobile-shop-pos.zip"
 $tempExtractPath = "$env:TEMP\mobile-shop-pos-extract"
 $destPath = "$xamppPath\htdocs\$appName"
